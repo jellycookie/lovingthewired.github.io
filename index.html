@@ -1,0 +1,67 @@
+<html>
+
+<head>
+  <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+  <script src="./on1-abi.json"></script>
+</head>
+
+<body>
+  <h1>Create Contract</h1>
+  <input type="text" placeholder='data' class="dataField1">
+  <br>
+  <button class="createButton btn">Create Contract</button>
+  <br><br>
+
+  <h1>Send Transaction</h1>
+  <input type="text" placeholder='to / contract' class="toField2">
+  <br>
+  <input type="text" placeholder='value (eth)' class="valueField2">
+  <span class="valueOutput2"></span>
+  <br>
+  <input type="text" placeholder='function / function hash' class="fnField2">
+  <span class="fnOutput2"></span>
+  <br>
+  <input type="text" placeholder='data' class="dataField2">
+  <span class="dataOutput2"></span>
+  <br>
+  <input type="text" placeholder='gas (gwei)' class="gasField2">
+  <br>
+  <button class="sendButton btn">Send Transaction</button>
+
+  <h3>Mint when sale goes live</h3>
+  <input type="text" placeholder='mintStatus function' class="mintStatusField2">
+  <button class="snipeButton btn">Snipe!</button>
+  <span class="mintStatus"></span>
+  <br>
+  <input type="text" placeholder='mintPrice (eth)' class="mintPriceField">
+  <br>
+  <input type="text" placeholder='mintAmount' class="mintAmountField">
+
+
+  <h1>Call</h1>
+  <input type="text" placeholder='contract' class="toField3">
+  <br>
+  <input type="text" placeholder='function / function hash' class="fnField3">
+  <span class="fnOutput3"></span>
+  <br>
+  <input type="text" placeholder='data' class="dataField3">
+  <span class="dataOutput3"></span>
+  <br>
+  <button class="callButton btn">Call</button>
+  <br>
+  <span class="output3"></span>
+  <br>
+
+  <h1>Encode</h1>
+  <input type="text" placeholder='sha3' class="sha3InputField4">
+  <span class="sha3Output4"></span>
+  <br>
+  <input type="text" placeholder='pad32Bytes' class="padInputField4">
+  <span class="padOutput4"></span>
+  <br>
+
+</body>
+<script src="./index.js"></script>
+
+</html>
