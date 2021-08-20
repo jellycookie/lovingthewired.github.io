@@ -1,6 +1,11 @@
 $ = document.querySelector.bind(document)
 
+// import "http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
+// import * as Web3 from "https://unpkg.com/web3@latest/dist/web3.min.js"
+// import { ethers } from "https://cdn.ethers.io/lib/ethers-5.2.esm.min.js";
+
 toBN = Web3.utils.toBN
+
 toWei = Web3.utils.toWei
 fromWei = Web3.utils.fromWei
 sha3 = Web3.utils.sha3
@@ -23,7 +28,7 @@ function beep() {
 // DEPLOY
 
 $('.createButton').addEventListener('click', () => {
-  data = $('.dataField1').value
+  data = $('.deployData').value
   ethereum.request({
     method: 'eth_sendTransaction',
     params: [{
@@ -37,18 +42,18 @@ $('.createButton').addEventListener('click', () => {
 
 
 // SEND
-$('.valueField2').addEventListener('change', () => {
-  $('.valueOutput2').innerText = ($('.valueField2').value * 1e18) + ' wei'
-  $('.mintPriceField').value = ''
-  $('.mintAmountField').value = ''
+$('.sendValue').addEventListener('change', () => {
+  $('.sendValueInfo').innerText = ($('.sendValue').value * 1e18) + ' wei'
+  $('.mintPrice').value = ''
+  $('.mintAmount').value = ''
 })
-$('.fnField2').addEventListener('change', () => {
-  $('.fnOutput2').innerText = getFnHash($('.fnField2').value)
+$('.sendFn').addEventListener('change', () => {
+  $('.sendFnInfo').innerText = getFnHash($('.sendFn').value)
 })
-$('.dataField2').addEventListener('change', () => {
-  $('.dataOutput2').innerText = pad32Bytes($('.dataField2').value)
-  $('.mintPriceField').value = ''
-  $('.mintAmountField').value = ''
+$('.sendData').addEventListener('change', () => {
+  $('.sendDataInfo').innerText = pad32Bytes($('.sendData').value)
+  $('.mintPrice').value = ''
+  $('.mintAmount').value = ''
 })
 
 $('.sendButton').addEventListener('click', sendTransaction)
@@ -59,13 +64,13 @@ function toWeiHex(amount, type = 'ether') {
 }
 
 function sendTransaction() {
-  to = $('.toField2').value
-  value = toWeiHex($('.valueField2').value)
+  to = $('.sendTo').value
+  value = toWeiHex($('.sendValue').value)
 
-  fn = getFnHash($('.fnField2').value)
-  data = fn + pad32Bytes($('.dataField2').value)
+  fn = getFnHash($('.sendFn').value)
+  data = fn + pad32Bytes($('.sendData').value)
   // console.log( { from: accounts[0], to: to, data: data, value: value, })
-  gasPrice = toWeiHex($('.gasField2').value, 'gwei')
+  gasPrice = toWeiHex($('.sendGas').value, 'gwei')
 
   params = [{
     from: accounts[0],
@@ -85,12 +90,12 @@ function sendTransaction() {
 
 
 // SNIPE
-$('.mintPriceField').addEventListener('change', () => {
-  $('.valueField2').value = $('.mintPriceField').value * parseInt($('.mintAmountField').value)
+$('.mintPrice').addEventListener('change', () => {
+  $('.sendValue').value = $('.mintPrice').value * parseInt($('.mintAmount').value)
 })
-$('.mintAmountField').addEventListener('change', () => {
-  $('.valueField2').value = $('.mintPriceField').value * parseInt($('.mintAmountField').value)
-  $('.dataField2').value = pad32Bytes($('.mintAmountField').value)
+$('.mintAmount').addEventListener('change', () => {
+  $('.sendValue').value = $('.mintPrice').value * parseInt($('.mintAmount').value)
+  $('.sendData').value = pad32Bytes($('.mintAmount').value)
 })
 
 snipeWatching = false
@@ -101,24 +106,24 @@ var interval = 0
 $('.snipeButton').addEventListener('click', () => {
   if (snipeWatching) {
     clearInterval(interval);
-    $('.mintStatus').innerText = 'Stopped'
+    $('.mintInfo').innerText = 'Stopped'
     snipeWatching = false
-    $('.mintStatus').style.backgroundColor = ''
+    $('.mintInfo').style.backgroundColor = ''
   } else {
-    $('.mintStatus').innerText = 'Checking..'
+    $('.mintInfo').innerText = 'Checking..'
     sniped = false
     interval = setInterval(function () {
-      fn = $('.mintStatusField2').value
+      fn = $('.mintFn').value
       negate = false
       if (fn[0] === '!') {
         fn = fn.slice(1,)
         negate = true
       }
-      contract = new web3.eth.Contract(abi, $('.toField2').value)
+      contract = new web3.eth.Contract(abi, $('.sendTo').value)
       contract.methods[fn].call().call().then((status) => {
         if (negate) status = !status
-        $('.mintStatus').innerText = 'Live: ' + String(status)
-        $('.mintStatus').style.backgroundColor = status ? 'lightgreen' : 'orange'
+        $('.mintInfo').innerText = 'Live: ' + String(status)
+        $('.mintInfo').style.backgroundColor = status ? 'lightgreen' : 'orange'
         if (status && !sniped) {
           clearInterval(interval);
           sniped = true
@@ -135,12 +140,12 @@ $('.snipeButton').addEventListener('click', () => {
 
 address = "0x3bf2922f4520a8BA0c2eFC3D2a1539678DaD5e9D"  // ON1 Main
 // address = "0x0692f6f933A3d050779472daE386b297269B4108"
-$('.toField2').value = address
-$('.toField3').value = address
-$('.mintStatusField2').value = "!isAllowListActive()"
-$('.fnField2').value = "purchase(uint256)"
-$('.mintPriceField').value = '0.07777'
-contract = new web3.eth.Contract(abi, $('.toField2').value)
+$('.sendTo').value = address
+$('.callTo').value = address
+$('.mintFn').value = "!isAllowListActive()"
+$('.sendFn').value = "purchase(uint256)"
+$('.mintPrice').value = '0.07777'
+contract = new web3.eth.Contract(abi, $('.sendTo').value)
 
 /* ethereumButton.addEventListener('click', () => {
   getAccount();
@@ -157,21 +162,21 @@ function getFnHash(fn) {
   return fn
 }
 
-$('.fnField3').addEventListener('change', () => {
-  $('.fnOutput3').innerText = getFnHash($('.fnField3').value)
+$('.callFn').addEventListener('change', () => {
+  $('.callFnInfo').innerText = getFnHash($('.callFn').value)
 })
-$('.dataField3').addEventListener('change', () => {
-  $('.dataOutput3').innerText = pad32Bytes($('.dataField3').value)
+$('.callData').addEventListener('change', () => {
+  $('.callDataInfo').innerText = pad32Bytes($('.callData').value)
 })
 
 $('.callButton').addEventListener('click', () => {
-  to = $('.toField3').value
-  fn = getFnHash($('.fnField3').value)
-  data = $('.dataField3').value
+  to = $('.callTo').value
+  fn = getFnHash($('.callFn').value)
+  data = $('.callData').value
 
-  contract = new web3.eth.Contract(abi, $('.toField2').value)
+  contract = new web3.eth.Contract(abi, $('.sendTo').value)
   contract.methods[fn].call().call().then((status) => {
-    $('.output3').innerText = String(status)
+    $('.callInfo').innerText = String(status)
     console.log(status)
   })
   // ethereum
@@ -191,12 +196,12 @@ $('.callButton').addEventListener('click', () => {
 
 
 // ENCODE
-$('.sha3InputField4').addEventListener('change', (e) => {
-  $('.sha3Output4').innerText = sha3($('.sha3InputField4').value)
+$('.sha3Input').addEventListener('change', (e) => {
+  $('.sha3Output').innerText = sha3($('.sha3Input').value)
 })
 
-$('.padInputField4').addEventListener('change', (e) => {
-  $('.padOutput4').innerText = pad32Bytes($('.padInputField4').value)
+$('.padInput').addEventListener('change', (e) => {
+  $('.padOutput').innerText = pad32Bytes($('.padInput').value)
 })
 
 function pad32Bytes(data) {
