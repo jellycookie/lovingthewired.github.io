@@ -8,106 +8,6 @@ _global_elements = []
 let accounts = []
 
 
-
-
-
-
-
-async function parseFunction(func, allowNegate = false) {
-  console.log('allowNeg', allowNegate)
-  if (allowNegate && func[0] === '!') func = func.slice(1)
-  console.log(func)
-  if (func.slice(0, 2) == '0x' && func.length == 10) return func
-  if (!func.match(/^[\d\w_-]+\(([\d\w]+)*(,[\d\w]+)*\)$/)) return 'Invalid Function'
-  try { return await web3.eth.abi.encodeFunctionSignature(func) }
-  catch (e) { return e }
-}
-
-function validateCurrency(amount, type = 'ether', allowEmpty = false) {
-  if (allowEmpty && amount === '') return type
-  try { web3.utils.toWei(amount, type) }
-  catch (e) { return e }
-  return type
-}
-
-
-const objectMap = (obj, fn) =>
-  Object.fromEntries(
-    Object.entries(obj).map(
-      ([k, v], i) => [k, fn(v, k, i)]
-    )
-  )
-
-
-async function isContract(address) {
-  return await web3.eth.getCode(address) !== '0x'
-}
-
-async function getAccountInfo(address, type = 'any') {
-  let info = ''
-  let to = ''
-  // console.log('query for ', address, type)
-
-  try { to = web3.utils.toChecksumAddress(address) }
-  catch (e) { return e }
-
-  let is_erc721 = false
-  let is_contract = await isContract(to)
-  if ((type == 'contract' || type == 'erc721') && !is_contract) return 'Error: address is not a contract'
-  if (type == 'person' && is_contract) return 'Error: address is a contract'
-
-  try {
-    let bal = await web3.eth.getBalance(to)
-    bal = parseFloat(web3.utils.fromWei(bal)).toFixed(2)
-
-    info = `(${bal} eth)`
-    // console.log('1')
-
-
-    if (is_contract) {
-      info += ' [Contract]'
-
-      // console.log('2')
-      let additional_info = ''
-      try {
-        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('name()') }
-        _name = await ethereum.request({ method: 'eth_call', params: [tx] })
-        _name = web3.eth.abi.decodeParameter('string', _name)
-
-        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('symbol()') }
-        symbol = await ethereum.request({ method: 'eth_call', params: [tx] })
-        symbol = web3.eth.abi.decodeParameter('string', symbol)
-
-        additional_info = ` ${_name} (${symbol})`
-        is_erc721 = true
-      } catch (e) { }
-      info += additional_info
-
-      // console.log('3')
-      additional_info = ''
-      try {
-        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('owner()') }
-        owner = await ethereum.request({ method: 'eth_call', params: [tx] })
-        owner = web3.eth.abi.decodeParameter('address', owner)
-
-        additional_info = ` , owner: ${owner}`
-      } catch (e) { }
-      info += additional_info
-
-    }
-
-  } catch (e) { info = 'Error: ' + e.message }
-  if (type === 'erc721' && !is_erc721) return 'Error: contract is not ERC721'
-  // console.log('returned ', info)
-
-  return info
-}
-
-
-
-// ELEMENTS
-
-
 class Element {
   constructor(data, parent = undefined) {
     this._data = data
@@ -213,42 +113,7 @@ class ArgButton extends Element {
   }
 }
 
-class TransactionElement extends Element {
-  async onchange(id) {
-    buildTransactionWrapper()
-  }
-
-
-  async onclick(id, data) {
-    sendTransactionWrapper()
-  }
-
-  async buildTransactionWrapper() {
-    let tx
-    let valid = true
-    let msg = ''
-
-    try { tx = await this.buildTransaction(this.getArgValues()) }
-    catch (e) { msg = e; valid = false; }
-
-    this.setInfo(msg)
-    if (valid) this.button.selector.disabled = false
-    else { this.button.selector.disabled = true; throw e }
-
-    return tx
-  }
-
-  async sendTransactionWrapper() {
-    let tx = await this.buildTransactionWrapper()
-    console.log('sending', tx)
-    let result = await sendTransaction(tx, this._data.type)
-    this.setInfo(result)
-    return result
-  }
-
-}
-
-class ArgInputField extends TransactionElement {
+class ArgInputField extends Element {
 
   render(id, data) {
     let html = ''
@@ -286,15 +151,24 @@ class ArgInputField extends TransactionElement {
     return value
   }
 
-  getArgValues() {
-    let arg = {}
-    arg[this._data.name] = this.getValue()
-    return arg
-  }
-
 }
 
+async function parseFunction(func, allowNegate = false) {
+  console.log('allowNeg', allowNegate)
+  if (allowNegate && func[0] === '!') func = func.slice(1)
+  console.log(func)
+  if (func.slice(0, 2) == '0x' && func.length == 10) return func
+  if (!func.match(/^[\d\w_-]+\(([\d\w]+)*(,[\d\w]+)*\)$/)) return 'Invalid Function'
+  try { return await web3.eth.abi.encodeFunctionSignature(func) }
+  catch (e) { return e }
+}
 
+function validateCurrency(amount, type = 'ether', allowEmpty = false) {
+  if (allowEmpty && amount === '') return type
+  try { web3.utils.toWei(amount, type) }
+  catch (e) { return e }
+  return type
+}
 
 class Function extends Element {
   render(id, data) {
@@ -319,11 +193,107 @@ class Function extends Element {
     return html
   }
 
+  async onchange(id) {
+    let valid = true
+    let msg = ''
+    try { await this.buildTransaction(this.getArgValues()) }
+    catch (e) { msg = e; valid = false; }
+    // await this.buildTransaction(this.getArgValues())
+
+    if (valid) this.button.selector.disabled = false
+    else this.button.selector.disabled = true
+    this.setInfo(msg)
+  }
+
+
+  async onclick(id, data) {
+    // console.log('clicl', this._id, this)
+    let tx = await this.buildTransaction(this.getArgValues())
+    console.log(tx)
+    let result = await sendTransaction(tx, data.type)
+    this.setInfo(result)
+  }
+
   getArgValues() {
     return objectMap(this.args, e => e.getValue())
   }
 
 }
+
+
+
+const objectMap = (obj, fn) =>
+  Object.fromEntries(
+    Object.entries(obj).map(
+      ([k, v], i) => [k, fn(v, k, i)]
+    )
+  )
+
+
+async function isContract(address) {
+  return await web3.eth.getCode(address) !== '0x'
+}
+
+async function getAccountInfo(address, type = 'any') {
+  let info = ''
+  let to = ''
+  // console.log('query for ', address, type)
+
+  try { to = web3.utils.toChecksumAddress(address) }
+  catch (e) { return e }
+
+  let is_erc721 = false
+  let is_contract = await isContract(to)
+  if ((type == 'contract' || type == 'erc721') && !is_contract) return 'Error: address is not a contract'
+  if (type == 'person' && is_contract) return 'Error: address is a contract'
+
+  try {
+    let bal = await web3.eth.getBalance(to)
+    bal = parseFloat(web3.utils.fromWei(bal)).toFixed(2)
+
+    info = `(${bal} eth)`
+    // console.log('1')
+
+
+    if (is_contract) {
+      info += ' [Contract]'
+
+      // console.log('2')
+      let additional_info = ''
+      try {
+        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('name()') }
+        _name = await ethereum.request({ method: 'eth_call', params: [tx] })
+        _name = web3.eth.abi.decodeParameter('string', _name)
+
+        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('symbol()') }
+        symbol = await ethereum.request({ method: 'eth_call', params: [tx] })
+        symbol = web3.eth.abi.decodeParameter('string', symbol)
+
+        additional_info = ` ${_name} (${symbol})`
+        is_erc721 = true
+      } catch (e) { }
+      info += additional_info
+
+      // console.log('3')
+      additional_info = ''
+      try {
+        tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('owner()') }
+        owner = await ethereum.request({ method: 'eth_call', params: [tx] })
+        owner = web3.eth.abi.decodeParameter('address', owner)
+
+        additional_info = ` , owner: ${owner}`
+      } catch (e) { }
+      info += additional_info
+
+    }
+
+  } catch (e) { info = 'Error: ' + e.message }
+  if (type === 'erc721' && !is_erc721) return 'Error: contract is not ERC721'
+  // console.log('returned ', info)
+
+  return info
+}
+
 
 
 // CALL
@@ -395,9 +365,7 @@ sendTxCondition.buildTransaction = async (args) => {
     'call',
   )
 }
-
 sendTxCondition.onchange = async () => {
-  let txCondition = await sendTxCondition.buildTransactionWrapper()
   let valid = true
   let msg = ''
   try {
@@ -678,6 +646,7 @@ window.addEventListener('load', reloadAccounts)
 
 
 
+
 // // const provider = new ethers.providers.Web3Provider(window.ethereum)
 
 // // 0xe8a15fe5c4c12799776fb6f2b5b0b7205552cc7e // mystery man
@@ -689,25 +658,6 @@ window.addEventListener('load', reloadAccounts)
 // // address = "0x9c0ffc9088abeb2ea220d642218874639229fa7a"     // DOGU
 // address = "0xe689c7c5a5e6fa5d0f5d0c5be165bcb73c2d5d9c"     // DOGU Rinkeby
 
-// $('.sendTo').value = address
-// $('.mintStatusFn').value = "!isAllowListActive()"
-// $('.sendFn').value = "mint(uint256)"
-// $('.mintPrice').value = '0.06'
-// // contract = new web3.eth.Contract(abi, $('.sendTo').value)
-
-
-
-// validColor = '#eaffef'
-// invalidColor = '#ffe3e1'
-
-// toBN = Web3.utils.toBN
-
-// toWei = Web3.utils.toWei
-// fromWei = Web3.utils.fromWei
-// sha3 = Web3.utils.sha3
-
-// var web3 = new Web3(Web3.givenProvider)
-
 // privKey = web3.eth.accounts.create().privateKey
 // $('.testAccountPrivKey').innerText = 'Test account private key: ' + privKey
 // $('.privKey').addEventListener('change', async () => {
@@ -716,78 +666,9 @@ window.addEventListener('load', reloadAccounts)
 //   testAccount = web3.eth.accounts.privateKeyToAccount($('.privKey').value)
 // })
 
-// // let accounts = [];
-// async function initialize() {
-//   accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-//   chainChanged()
-//   updateAllFields()
-//   updateTxStatus()
-// }
-// window.addEventListener('load', initialize)
-
-// testAccount = undefined
-
-// async function checkBalances() {
-//   if (isValidAddress(accounts[0])) {
-//     bal = parseFloat(fromWei(await web3.eth.getBalance(accounts[0]))).toFixed(4)
-//     $('.accountInfo').innerText = 'Account: ' + accounts[0] + ` (${bal} eth)`
-//   }
-
-//   if (testAccount != undefined && isValidAddress(testAccount.address)) {
-//     bal = parseFloat(fromWei(await web3.eth.getBalance(testAccount.address))).toFixed(4)
-//     $('.testAccountInfo').innerText = 'Account: ' + testAccount.address + ` (${bal} eth)`
-//   }
-// }
-// setInterval(checkBalances, 3000)
-
-// function chainChanged(chainId) {
-//   // window.location.reload() 
-//   document.querySelectorAll('.warning').forEach(e => { e.innerText = (ethereum.chainId == 1) ? 'WARNING: CURENTLY ON MAINNET' : '' })
-//   $('.chainId').innerText = 'ChainId: ' + parseInt(ethereum.chainId)
-// }
-// ethereum.on('chainChanged', chainChanged)
-// ethereum.on('accountsChanged', initialize)
-
-
 // function beep() {
 //   var snd = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");
 //   snd.play();
-// }
-
-
-// function toWeiHex(amount, type = 'ether') {
-//   if (amount === '') amount = '0'
-//   return '0x' + toBN(toWei(amount, type)).toString(16)
-// }
-
-// function toValidFn(fn, allowNegate = false) {
-//   if (!validFn(fn, allowNegate)) throw 'invalid Function'
-//   return fn
-// }
-// function validFn(fn, allowNegate = false) {
-//   if (allowNegate && fn[0] === '!') fn = fn.slice(1)
-//   if (fn.slice(0, 2) == '0x' && fn.length == 10) return true
-//   if (fn.match(/^[\d\w_-]+\(([\d\w]+)*(,[\d\w]+)*\)$/)) return true
-//   return false
-// }
-// function getFnHash(fn) {
-//   if (fn === '') return ''
-//   if (fn.slice(0, 1) === '!') fn = fn.slice(1)
-//   if (fn.slice(0, 2) !== '0x') fn = sha3(fn).slice(0, 10)
-//   return fn
-// }
-
-// function pad32Bytes(data) {
-//   var s = String(data);
-//   while (s.length < (64 || 2)) { s = "0" + s; }
-//   return s;
-// }
-
-// function createPayload(fn, data) {
-//   if (fn !== '') fn = getFnHash(fn)
-//   if (data !== '') data = data.split('\n').map((e) => { return pad32Bytes(e.trim()) }).join('')
-//   payload = fn + data
-//   return payload
 // }
 
 // var ABI
@@ -802,158 +683,9 @@ window.addEventListener('load', reloadAccounts)
 // $('.abi').addEventListener('change', updateABI)
 
 
-// function updateAllFields() {
-
-//   $('.sendFnInfo').innerText = getFnHash($('.sendFn').value)
-//   $('.sendDataInfo').value = getPayload()
-
-//   $('.callFnInfo').innerText = getFnHash($('.callFn').value)
-//   $('.callDataInfo').value = getPayload('call')
-
-//   date = $('.mintBlockTime').value
-//   $('.mintBlockTimeInfo').innerText = date === '' ? '' : new Date(date * 1000).toString()
-//   $('.mintStatusFnInfo').innerText = getFnHash($('.mintStatusFn').value)
-// }
-
-// async function updateTxStatus() {
-//   if (expertMode) from = testAccount.address
-//   else from = accounts[0]
-
-//   validTx = true
-//   tx = getTransaction(from)
-//   try {
-//     await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
-//   } catch (e) {
-//     $('.sendTxInfo').innerText = `code: ${e.code}, msg: ${e.message}`
-//     validTx = false
-//   }
-
-//   if (validTx) {
-//     $('.sendTxInfo').innerText = ''
-//     $('.sendButton').style.backgroundColor = validColor
-//     $('.sendButton').disabled = false
-//   } else {
-//     $('.sendButton').style.backgroundColor = invalidColor
-//     $('.sendButton').disabled = true
-//   }
-
-//   validMint = await validMintCondition()
-
-//   if (validTx && validMint) {
-//     $('.snipeButton').style.backgroundColor = validColor
-//     $('.snipeButton').disabled = false
-//     if (expertMode) $('.snipeButton').style.color = 'red'
-//   } else {
-//     $('.snipeButton').style.backgroundColor = invalidColor
-//     $('.snipeButton').disabled = true
-//     $('.snipeButton').style.color = ''
-//   }
-
-// }
-
-// document.querySelectorAll('.triggerUpdate').forEach(e => e.addEventListener('input', updateAllFields))
-// document.querySelectorAll('.triggerUpdate').forEach(e => e.addEventListener('change', updateTxStatus))
-// document.querySelectorAll('.fnField').forEach(e => e.addEventListener('input', () => {
-//   e.style.backgroundColor = (e.value === '') ? 'white' : validFn(e.value, e.classList.contains('fnAllowNegate')) ? 'white' : invalidColor
-// }))
-
-// $('.sendValue').addEventListener('change', () => {
-//   $('.mintPrice').value = ''
-//   $('.mintAmount').value = ''
-// })
-
-// $('.sendData').addEventListener('input', () => {
-//   $('.mintPrice').value = ''
-//   $('.mintAmount').value = ''
-// })
-
-// $('.sendButton').addEventListener('click', sendTransaction)
 
 
-// function getPayload(type = 'send') {
-//   return createPayload($(`.${type}Fn`).value, $(`.${type}Data`).value)
-// }
-
-// function sendTransaction(from = undefined) {
-//   tx = getTransaction(from)
-
-//   ethereum.request({ method: 'eth_sendTransaction', params: [tx] })
-//     .then((txHash) => console.log('tx: ' + txHash))
-//     .catch((e) => $('.sendTxInfo').innerText = `code: ${e.code}, msg: ${e.message}`);
-
-// }
-
-// function getTransaction(from = undefined) {
-//   if (from == undefined) from = accounts[0]
-//   tx = {
-//     from: from,//web3.utils.toChecksumAddress(from),
-//     value: toWeiHex($('.sendValue').value),
-//     data: getPayload('send'),
-//   }
-
-//   to = $('.sendTo').value
-//   gasPrice = toWeiHex($('.sendGas').value, 'gwei')
-
-//   if (to !== '') tx['to'] = web3.utils.toChecksumAddress(to)
-//   if (gasPrice !== '0x0') tx['gasPrice'] = gasPrice
-
-//   return tx
-// }
-
-// async function getTransactionWithGas(from = undefined) {
-//   tx = getTransaction(from)
-//   tx.gas = 1.3 * await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
-//   return tx
-// }
-
-// async function validTransaction(from = undefined) {
-//   success = true
-//   try {
-//     tx = getTransaction(from)
-//     await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
-//   } catch (e) { success = false }
-//   return success
-// }
-// // try {
-// //   await getTransaction(from)
-// //   return true
-// // }
-// // catch (e) {
-// //   console.log(e)
-// //   return false
-// // }
-// // }
-
-
-// // SNIPE
-
-
-// $('.mintPrice').addEventListener('input', () => {
-//   mintPriceUpdate()
-//   updateAllFields()
-// })
-// $('.mintAmount').addEventListener('input', () => {
-//   mintPriceUpdate()
-//   updateAllFields()
-// })
-// $('.mintPrice').addEventListener('change', updateTxStatus)
-// $('.mintAmount').addEventListener('change', updateTxStatus)
-
-// function mintPriceUpdate() {
-//   mintPrice = $('.mintPrice').value
-//   mintAmount = $('.mintAmount').value
-//   if (mintPrice !== '' && mintAmount !== '') {
-//     $('.sendData').value = mintAmount
-//     $('.sendValue').value = mintPrice * mintAmount
-//   }
-// }
-
-// $('.mintBlockTime').addEventListener('change', () => {
-//   $('.mintStatusFn').value = ''
-// })
-// $('.mintStatusFn').addEventListener('change', () => {
-//   $('.mintBlockTime').value = ''
-// })
+// SNIPE
 
 // var checkInterval = 200
 
@@ -1061,222 +793,4 @@ window.addEventListener('load', reloadAccounts)
 //   }
 
 //   console.log('check')
-// }
-
-
-// // CALL
-
-// document.querySelectorAll('.triggerCall').forEach(e => e.addEventListener('change', triggerCall))
-
-// async function triggerCall() {
-//   to = $('.sendTo').value
-//   payload = getPayload('call')
-
-//   try {
-//     res = await ethereum.request({ method: 'eth_call', params: [{ to: to, data: payload }] })
-//     $('.callInfo').innerText = res
-//   } catch (e) { $('.callInfo').innerText = `code: ${e.code}, msg: ${e.message}` }
-// }
-
-
-// // MULTICALL
-
-// async function getMulticallDeployTx() {
-//   from = web3.utils.toChecksumAddress($('.multDeployFrom').value)
-
-//   key = web3.utils.soliditySha3(from, 'hahahaha').slice(2)
-//   data = multicallDeployData + key
-//   tx = { from: from, data: data }
-
-//   tx.gas = await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
-
-//   return tx
-// }
-
-// async function multDeployAddressChange() {
-//   success = true
-//   try {
-//     await getMulticallDeployTx()
-//   } catch (e) {
-//     success = false
-//     $('.multDeployBtn').disabled = true
-//     $('.multDeployFromInfo').innerText = e
-//   }
-//   if (success) {
-//     $('.multDeployBtn').disabled = false
-//     $('.multDeployFromInfo').innerText = ''
-//   }
-// }
-// $('.multDeployFrom').addEventListener('change', multDeployAddressChange)
-
-// async function multiCallDeploy() {
-//   tx = await getMulticallDeployTx()
-//   ethereum.request({ method: 'eth_sendTransaction', params: [tx] })
-//     .then((txHash) => console.log('tx: ' + txHash))
-// }
-// $('.multDeployBtn').addEventListener('click', multiCallDeploy)
-
-// async function multAddressChanged() {
-//   tx = {
-//     to: web3.utils.toChecksumAddress($('.multAddress').value),
-//     data: web3.eth.abi.encodeFunctionSignature('owner()')
-//   }
-//   owner = await ethereum.request({ method: 'eth_call', params: [tx] })
-//   $('.multAddressInfo').innerText = ' owner: ' + web3.eth.abi.decodeParameter('address', owner)
-// }
-// $('.multAddress').addEventListener('change', multAddressChanged)
-
-// // XXX
-// $('.multAddress').value = '0x16a8F24AAFA68B0A610079786C78dd5D67fD4610'
-// $('.multTokenAddress').value = '0x6302c083ce0f5d0142e2a2d743e78d936232db6c'
-// $('.multMintFn').value = 'mintChip(uint256)'
-
-// async function updateTokenInfo() {
-
-//   info = ''
-
-//   try {
-//     to = web3.utils.toChecksumAddress($('.multTokenAddress').value)
-
-//     tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('name()') }
-//     _name = await ethereum.request({ method: 'eth_call', params: [tx] })
-//     _name = web3.eth.abi.decodeParameter('string', _name)
-
-//     tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('symbol()') }
-//     symbol = await ethereum.request({ method: 'eth_call', params: [tx] })
-//     symbol = web3.eth.abi.decodeParameter('string', symbol)
-
-//     tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('owner()') }
-//     owner = await ethereum.request({ method: 'eth_call', params: [tx] })
-//     owner = web3.eth.abi.decodeParameter('address', owner)
-
-//     info = `${_name} (${symbol}) , owner: ${owner}`
-//   } catch (e) { info = e.message }
-
-//   $('.multTokenAddressInfo').innerText = info
-// }
-
-// $('.multTokenAddress').addEventListener('change', updateTokenInfo)
-
-// async function getMultMintTx(from = undefined) {
-//   if (from == undefined) from = web3.utils.toChecksumAddress(accounts[0])
-//   from = web3.utils.toChecksumAddress(from)
-
-//   to = web3.utils.toChecksumAddress($('.multAddress').value)
-//   tokenAddr = web3.utils.toChecksumAddress($('.multTokenAddress').value)
-//   mintFn = toValidFn($('.multMintFn').value)
-//   mintFnCallData = web3.eth.abi.encodeFunctionCall({ name: mintFn, type: 'function', inputs: [{ type: 'uint256', name: '' }] }, ['1'])
-
-//   numCalls = $('.multNumCalls').value
-//   mintPrice = toWei($('.multMintPrice').value, 'ether')
-//   value = web3.utils.toHex(toBN(mintPrice).mul(toBN(numCalls)).toString())
-
-//   data = web3.eth.abi.encodeFunctionCall({
-//     name: 'multicall',
-//     type: 'function',
-//     payable: true,
-//     inputs: [
-//       { type: 'address', name: 'addr', payable: true, },
-//       { type: 'uint256', name: 'num' },
-//       { type: 'uint256', name: 'value' },
-//       { type: 'bytes', name: 'data' },
-//     ]
-//   }, [
-//     tokenAddr,
-//     numCalls,
-//     mintPrice,
-//     mintFnCallData,
-//   ])
-//   tx = { from: from, to: to, value: value, data: data }
-//   tx.gas = await eth_estimateGas(tx)
-
-//   return tx
-// }
-
-// async function sendMultMintTx() {
-//   tx = await getMultMintTx()
-//   ethereum.request({ method: 'eth_sendTransaction', params: [tx] })
-//     .then((txHash) => console.log('tx: ' + txHash))
-// }
-// $('.multBtn').addEventListener('click', sendMultMintTx)
-
-// async function multMintTxInfo() {
-//   success = true
-//   msg = ''
-
-//   try { await getMultMintTx() } catch (e) { success = false; msg = e }
-
-//   if (success) $('.multBtn').disabled = false
-//   else $('.multBtn').disabled = true
-
-//   $('.multInfo').innerText = msg
-// }
-
-// document.querySelectorAll('.multTrigger').forEach(e => e.addEventListener('change', multMintTxInfo))
-
-
-
-
-// // TRANSFER
-
-// async function getMultTransferTx(from = undefined) {
-//   if (from == undefined) from = accounts[0]
-
-//   from = web3.utils.toChecksumAddress(from)
-//   to = web3.utils.toChecksumAddress($('.multAddress').value)
-//   tokenAddr = web3.utils.toChecksumAddress($('.multTokenAddress').value)
-//   tokenIds = $('.multTransferTokenId').value.split(',')
-
-//   data = web3.eth.abi.encodeFunctionCall({
-//     name: 'withdrawToken',
-//     type: 'function',
-//     inputs: [
-//       { type: 'address', name: 'addr', payable: true, },
-//       { type: 'uint256[]', name: 'tokenId' },
-//     ]
-//   }, [tokenAddr, tokenIds]
-//   )
-//   tx = { from: from, to: to, data: data }
-//   tx.gas = await eth_estimateGas(tx)
-
-//   return tx
-// }
-
-// async function multTransferTokenInfo() {
-//   success = true
-//   msg = ''
-
-//   try { await getMultTransferTx() } catch (e) { success = false; msg = e }
-
-//   if (success) $('.multTransferTokenBtn').disabled = false
-//   else $('.multTransferTokenBtn').disabled = true
-
-//   $('.multTransferTokenInfo').innerText = msg
-// }
-// $('.multTransferTokenId').addEventListener('change', multTransferTokenInfo)
-
-
-// async function sendMultTransferTx() {
-//   tx = await getMultTransferTx()
-//   ethereum.request({ method: 'eth_sendTransaction', params: [tx] })
-//     .then((txHash) => console.log('tx: ' + txHash))
-// }
-// $('.multTransferTokenBtn').addEventListener('click', sendMultTransferTx)
-
-
-
-
-
-
-
-// function paddedToChecksumAddress(address) {
-//   if (address.slice(0, 2) === '0x') address = address.slice(2)
-//   while (address.slice(0, 2) === '00') address = address.slice(2)
-//   return web3.utils.toChecksumAddress('0x' + address)
-// }
-
-// async function eth_estimateGas(tx) {
-//   try {
-//     return await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
-//   } catch (e) { throw e.message }
 // }
