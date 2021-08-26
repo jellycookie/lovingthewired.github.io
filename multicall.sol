@@ -8,6 +8,13 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Address.sol";
 
 contract Multicall is Ownable, ERC721Holder {
+    constructor(bytes32 _key) {
+        require(
+            keccak256(abi.encodePacked(msg.sender, "hahahaha")) == _key,
+            "noobz"
+        );
+    }
+
     /**
      * @dev Receives and executes a batch of function calls on this contract.
      */
@@ -18,7 +25,7 @@ contract Multicall is Ownable, ERC721Holder {
         bytes memory data
     ) external payable onlyOwner {
         // results = new bytes[](num);
-        require(msg.value >= num * value, "not enough eth sent");
+        require(msg.value >= num * value, "missing eth");
         for (uint256 i = 0; i < num; i++) {
             // results[i] = Address.functionCallWithValue(addr, data, 0);
             Address.functionCallWithValue(addr, data, value);
@@ -32,16 +39,11 @@ contract Multicall is Ownable, ERC721Holder {
         payable(msg.sender).transfer(balance);
     }
 
-    function withdrawToken(address addr, uint256 _tokenId) external onlyOwner {
-        // bytes memory transferPayload = abi.encodeWithSelector(IERC721.safeTransferFrom(address,address,uint256).selector, address(this), address(msg.sender), _tokenId);
-        bytes memory transferPayload = abi.encodeWithSelector(
-            bytes4(keccak256("safeTransferFrom(address,address,uint256)")),
-            address(this),
-            address(msg.sender),
-            _tokenId
-        );
-        Address.functionCall(address(addr), transferPayload);
-    }
+    // function withdrawToken(address addr, uint _tokenId) external onlyOwner {
+    //     // bytes memory transferPayload = abi.encodeWithSelector(IERC721.safeTransferFrom(address,address,uint256).selector, address(this), address(msg.sender), _tokenId);
+    //     bytes memory transferPayload = abi.encodeWithSelector(bytes4(keccak256("safeTransferFrom(address,address,uint256)")), address(this), address(msg.sender), _tokenId);
+    //     Address.functionCall(address(addr), transferPayload);
+    // }
 
     function withdrawToken(address addr, uint256[] memory _tokenIds)
         external

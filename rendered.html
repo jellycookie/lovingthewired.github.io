@@ -1,0 +1,1095 @@
+<html>
+
+<head>
+  <script src="https://unpkg.com/web3@latest/dist/web3.min.js"></script>
+  <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script> -->
+  <!-- <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script> -->
+  <!-- <script src="./on1-abi.json"></script> -->
+  <!-- <script src="./chiptopunks-abi.json"></script> -->
+</head>
+<style>
+  .functionButtonDiv {
+    /* remove for thin buttons */
+    display: flex;
+    white-space: break-spaces;
+  }
+
+  .btn {
+    width: 7em;
+  }
+
+  .group {
+    margin: 1em 0;
+  }
+
+  .label {
+    margin: 0 1em;
+  }
+
+  .labelGroup {
+    display: inline-flex;
+  }
+
+  /* .panel {
+    margin: 0 1em;
+  } */
+
+  /* .panelHeader {
+    margin
+  } */
+
+  .panelBody {
+    margin: 1em 2em;
+  }
+
+
+  /* .textInputInfo {
+    white-space: nowrap;
+  } */
+
+
+  /* .functionButtonDiv {
+    display: flex;
+  } */
+
+  .functionGroup {
+    /* display: inline-flex; */
+    /* overflow-x: auto; */
+    white-space: nowrap;
+  }
+
+  .functionInputDiv {
+    display: inline-flex;
+  }
+
+
+  .textInputInfo {
+    display: inline-flex;
+    overflow-x: scroll;
+    max-width: 15em;
+  }
+
+  .textInputInfo::-webkit-scrollbar {
+    height: 0px;
+    /* background: transparent; */
+    /* make scrollbar transparent */
+  }
+
+  /* .textInputInfo:after {
+    content: "";
+    display: block;
+    height: 1px;
+    width: 100%;
+  } */
+
+  .banner {
+    background-color: yellow;
+    color: red;
+    /* position: fixed; */
+    left: 0;
+    top: 0;
+    height: inherit;
+    text-align: center;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  .banner p {
+    font-size: larger;
+  }
+
+  body {
+    margin: 0;
+  }
+
+
+
+  .topLevel {
+    margin: 0em 0;
+  }
+
+  .topLevel>.panelBody {
+    display: flex;
+    margin: 0;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .functionHeader {
+    margin: 0.5em;
+  }
+</style>
+
+<body>
+</body>
+<script>
+  var multicallDeployData = "0x60806040523480156200001157600080fd5b50604051620016b0380380620016b08339818101604052810190620000379190620001ae565b620000576200004b620000cb60201b60201c565b620000d360201b60201c565b80336040516020016200006b919062000243565b6040516020818303038152906040528051906020012014620000c4576040517f08c379a0000000000000000000000000000000000000000000000000000000008152600401620000bb906200026d565b60405180910390fd5b506200038a565b600033905090565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050816000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a35050565b600081519050620001a88162000370565b92915050565b600060208284031215620001c157600080fd5b6000620001d18482850162000197565b91505092915050565b620001ef620001e982620002ab565b620002e9565b82525050565b6000620002046005836200028f565b915062000211826200031e565b602082019050919050565b60006200022b600883620002a0565b9150620002388262000347565b600882019050919050565b6000620002518284620001da565b60148201915062000262826200021c565b915081905092915050565b600060208201905081810360008301526200028881620001f5565b9050919050565b600082825260208201905092915050565b600081905092915050565b6000620002b882620002c9565b9050919050565b6000819050919050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000620002f682620002fd565b9050919050565b60006200030a8262000311565b9050919050565b60008160601b9050919050565b7f6e6f6f627a000000000000000000000000000000000000000000000000000000600082015250565b7f6861686168616861000000000000000000000000000000000000000000000000600082015250565b6200037b81620002bf565b81146200038757600080fd5b50565b611316806200039a6000396000f3fe6080604052600436106100705760003560e01c80636510f3301161004e5780636510f330146100f2578063715018a61461010e5780638da5cb5b14610125578063f2fde38b1461015057610070565b806313c31ff914610075578063150b7a021461009e5780633ccfd60b146100db575b600080fd5b34801561008157600080fd5b5061009c60048036038101906100979190610bc6565b610179565b005b3480156100aa57600080fd5b506100c560048036038101906100c09190610b4b565b6102fc565b6040516100d29190610dc9565b60405180910390f35b3480156100e757600080fd5b506100f0610310565b005b61010c60048036038101906101079190610ad0565b6103db565b005b34801561011a57600080fd5b506101236104d6565b005b34801561013157600080fd5b5061013a61055e565b6040516101479190610d77565b60405180910390f35b34801561015c57600080fd5b5061017760048036038101906101729190610aa7565b610587565b005b61018161067f565b73ffffffffffffffffffffffffffffffffffffffff1661019f61055e565b73ffffffffffffffffffffffffffffffffffffffff16146101f5576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016101ec90610e46565b60405180910390fd5b60005b81518110156102f75760007f42842e0eb38857a7775b4e7364b2775df7325074d088e7fb39590cd6281184ed303385858151811061025f577f4e487b7100000000000000000000000000000000000000000000000000000000600052603260045260246000fd5b602002602001015160405160240161027993929190610d92565b604051602081830303815290604052907bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19166020820180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff838183161783525050505090506102e28482610687565b505080806102ef906110a1565b9150506101f8565b505050565b600063150b7a0260e01b9050949350505050565b61031861067f565b73ffffffffffffffffffffffffffffffffffffffff1661033661055e565b73ffffffffffffffffffffffffffffffffffffffff161461038c576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161038390610e46565b60405180910390fd5b60004790503373ffffffffffffffffffffffffffffffffffffffff166108fc829081150290604051600060405180830381858888f193505050501580156103d7573d6000803e3d6000fd5b5050565b6103e361067f565b73ffffffffffffffffffffffffffffffffffffffff1661040161055e565b73ffffffffffffffffffffffffffffffffffffffff1614610457576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161044e90610e46565b60405180910390fd5b81836104639190610f5a565b3410156104a5576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161049c90610e86565b60405180910390fd5b60005b838110156104cf576104bb8583856106d1565b5080806104c7906110a1565b9150506104a8565b5050505050565b6104de61067f565b73ffffffffffffffffffffffffffffffffffffffff166104fc61055e565b73ffffffffffffffffffffffffffffffffffffffff1614610552576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161054990610e46565b60405180910390fd5b61055c6000610700565b565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16905090565b61058f61067f565b73ffffffffffffffffffffffffffffffffffffffff166105ad61055e565b73ffffffffffffffffffffffffffffffffffffffff1614610603576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016105fa90610e46565b60405180910390fd5b600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff161415610673576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161066a90610e06565b60405180910390fd5b61067c81610700565b50565b600033905090565b60606106c983836040518060400160405280601e81526020017f416464726573733a206c6f772d6c6576656c2063616c6c206661696c656400008152506107c4565b905092915050565b60606106f78484846040518060600160405280602981526020016112b8602991396107dc565b90509392505050565b60008060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050816000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a35050565b60606107d384846000856107dc565b90509392505050565b606082471015610821576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161081890610e26565b60405180910390fd5b61082a856108f0565b610869576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161086090610e66565b60405180910390fd5b6000808673ffffffffffffffffffffffffffffffffffffffff1685876040516108929190610d60565b60006040518083038185875af1925050503d80600081146108cf576040519150601f19603f3d011682016040523d82523d6000602084013e6108d4565b606091505b50915091506108e4828286610903565b92505050949350505050565b600080823b905060008111915050919050565b6060831561091357829050610963565b6000835111156109265782518084602001fd5b816040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161095a9190610de4565b60405180910390fd5b9392505050565b600061097d61097884610ecb565b610ea6565b9050808382526020820190508285602086028201111561099c57600080fd5b60005b858110156109cc57816109b28882610a92565b84526020840193506020830192505060018101905061099f565b5050509392505050565b60006109e96109e484610ef7565b610ea6565b905082815260208101848484011115610a0157600080fd5b610a0c84828561102e565b509392505050565b600081359050610a2381611272565b92915050565b600081359050610a3881611289565b92915050565b600082601f830112610a4f57600080fd5b8135610a5f84826020860161096a565b91505092915050565b600082601f830112610a7957600080fd5b8135610a898482602086016109d6565b91505092915050565b600081359050610aa1816112a0565b92915050565b600060208284031215610ab957600080fd5b6000610ac784828501610a14565b91505092915050565b60008060008060808587031215610ae657600080fd5b6000610af487828801610a29565b9450506020610b0587828801610a92565b9350506040610b1687828801610a92565b925050606085013567ffffffffffffffff811115610b3357600080fd5b610b3f87828801610a68565b91505092959194509250565b60008060008060808587031215610b6157600080fd5b6000610b6f87828801610a14565b9450506020610b8087828801610a14565b9350506040610b9187828801610a92565b925050606085013567ffffffffffffffff811115610bae57600080fd5b610bba87828801610a68565b91505092959194509250565b60008060408385031215610bd957600080fd5b6000610be785828601610a14565b925050602083013567ffffffffffffffff811115610c0457600080fd5b610c1085828601610a3e565b9150509250929050565b610c2381610fb4565b82525050565b610c3281610fd8565b82525050565b6000610c4382610f28565b610c4d8185610f3e565b9350610c5d81856020860161103d565b80840191505092915050565b6000610c7482610f33565b610c7e8185610f49565b9350610c8e81856020860161103d565b610c9781611148565b840191505092915050565b6000610caf602683610f49565b9150610cba82611159565b604082019050919050565b6000610cd2602683610f49565b9150610cdd826111a8565b604082019050919050565b6000610cf5602083610f49565b9150610d00826111f7565b602082019050919050565b6000610d18601d83610f49565b9150610d2382611220565b602082019050919050565b6000610d3b600b83610f49565b9150610d4682611249565b602082019050919050565b610d5a81611024565b82525050565b6000610d6c8284610c38565b915081905092915050565b6000602082019050610d8c6000830184610c1a565b92915050565b6000606082019050610da76000830186610c1a565b610db46020830185610c1a565b610dc16040830184610d51565b949350505050565b6000602082019050610dde6000830184610c29565b92915050565b60006020820190508181036000830152610dfe8184610c69565b905092915050565b60006020820190508181036000830152610e1f81610ca2565b9050919050565b60006020820190508181036000830152610e3f81610cc5565b9050919050565b60006020820190508181036000830152610e5f81610ce8565b9050919050565b60006020820190508181036000830152610e7f81610d0b565b9050919050565b60006020820190508181036000830152610e9f81610d2e565b9050919050565b6000610eb0610ec1565b9050610ebc8282611070565b919050565b6000604051905090565b600067ffffffffffffffff821115610ee657610ee5611119565b5b602082029050602081019050919050565b600067ffffffffffffffff821115610f1257610f11611119565b5b610f1b82611148565b9050602081019050919050565b600081519050919050565b600081519050919050565b600081905092915050565b600082825260208201905092915050565b6000610f6582611024565b9150610f7083611024565b9250817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0483118215151615610fa957610fa86110ea565b5b828202905092915050565b6000610fbf82611004565b9050919050565b6000610fd182611004565b9050919050565b60007fffffffff0000000000000000000000000000000000000000000000000000000082169050919050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000819050919050565b82818337600083830152505050565b60005b8381101561105b578082015181840152602081019050611040565b8381111561106a576000848401525b50505050565b61107982611148565b810181811067ffffffffffffffff8211171561109857611097611119565b5b80604052505050565b60006110ac82611024565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8214156110df576110de6110ea565b5b600182019050919050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b6000601f19601f8301169050919050565b7f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160008201527f6464726573730000000000000000000000000000000000000000000000000000602082015250565b7f416464726573733a20696e73756666696369656e742062616c616e636520666f60008201527f722063616c6c0000000000000000000000000000000000000000000000000000602082015250565b7f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e6572600082015250565b7f416464726573733a2063616c6c20746f206e6f6e2d636f6e7472616374000000600082015250565b7f6d697373696e6720657468000000000000000000000000000000000000000000600082015250565b61127b81610fb4565b811461128657600080fd5b50565b61129281610fc6565b811461129d57600080fd5b50565b6112a981611024565b81146112b457600080fd5b5056fe416464726573733a206c6f772d6c6576656c2063616c6c20776974682076616c7565206661696c6564a26469706673582212206a1fd5f6600088264c2872b0731099d99f2edd1ee4078ad85c8f292f071d477f64736f6c63430008040033"
+
+
+  function beep() {
+    var snd = new Audio("data:audio/wav;base64,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qJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");
+    snd.play();
+  }
+
+
+  async function parseFunction(func, allowNegate = false) {
+    console.log('allowNeg', allowNegate)
+    if (allowNegate && func[0] === '!') func = func.slice(1)
+    console.log(func)
+    if (func.slice(0, 2) == '0x' && func.length == 10) return func
+    if (!func.match(/^[\d\w_-]+\(([\d\w]+)*(,[\d\w]+)*\)$/)) return 'Invalid Function'
+    try { return await web3.eth.abi.encodeFunctionSignature(func) }
+    catch (e) { return e }
+  }
+
+  function validateCurrency(amount, type = 'ether', allowEmpty = false) {
+    if (allowEmpty && amount === '') return type
+    try { web3.utils.toWei(amount, type) }
+    catch (e) { return e }
+    return type
+  }
+
+
+  const objectMap = (obj, fn) =>
+    Object.fromEntries(
+      Object.entries(obj).map(
+        ([k, v], i) => [k, fn(v, k, i)]
+      )
+    )
+
+
+  async function isContract(address) {
+    return await web3.eth.getCode(address) !== '0x'
+  }
+
+  async function getAccountInfo(address, type = 'any') {
+    let info = ''
+    let to = ''
+    // console.log('query for ', address, type)
+
+    try { to = web3.utils.toChecksumAddress(address) }
+    catch (e) { return e }
+
+    let is_erc721 = false
+    let is_contract = await isContract(to)
+    if ((type == 'contract' || type == 'erc721') && !is_contract) return 'Error: address is not a contract'
+    if (type == 'person' && is_contract) return 'Error: address is a contract'
+
+    try {
+      let bal = await web3.eth.getBalance(to)
+      bal = parseFloat(web3.utils.fromWei(bal)).toFixed(2)
+
+      info = `(${bal} eth)`
+      // console.log('1')
+
+
+      if (is_contract) {
+        info += ' [Contract]'
+
+        // console.log('2')
+        let additional_info = ''
+        try {
+          tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('name()') }
+          _name = await ethereum.request({ method: 'eth_call', params: [tx] })
+          _name = web3.eth.abi.decodeParameter('string', _name)
+
+          tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('symbol()') }
+          symbol = await ethereum.request({ method: 'eth_call', params: [tx] })
+          symbol = web3.eth.abi.decodeParameter('string', symbol)
+
+          additional_info = ` ${_name} (${symbol})`
+          is_erc721 = true
+        } catch (e) { }
+        info += additional_info
+
+        // console.log('3')
+        additional_info = ''
+        try {
+          tx = { to: to, data: web3.eth.abi.encodeFunctionSignature('owner()') }
+          owner = await ethereum.request({ method: 'eth_call', params: [tx] })
+          owner = web3.eth.abi.decodeParameter('address', owner)
+
+          additional_info = ` , owner: ${owner}`
+        } catch (e) { }
+        info += additional_info
+
+      }
+
+    } catch (e) { info = 'Error: ' + e.message }
+    if (type === 'erc721' && !is_erc721) return 'Error: contract is not ERC721'
+    // console.log('returned ', info)
+
+    return info
+  }
+
+
+  function encodeFunctionCall(func, data) {
+    if (func === '') return data
+    if (func.slice(0, 2) === '0x') return func + data
+    if (data == '') return web3.eth.abi.encodeFunctionSignature(func)
+
+    let input_types = func.match(/\((.*)\)/g)[0].slice(1, -1).split(',')
+    let inputs = input_types.map(e => { return { type: e, name: '' } })
+    // console.log(func, inputs, data.split(','))
+
+    return web3.eth.abi.encodeFunctionCall({
+      name: func,
+      type: 'function',
+      inputs: inputs
+    }, data.split(','))
+  }
+
+
+
+  async function buildTransaction(from, to, value, gasPrice, func, data, type = 'send') {
+    let tx = {}
+
+    console.log(from, to, value,)
+
+    if (from === '') from = accounts[0]
+    tx.from = web3.utils.toChecksumAddress(from)
+
+
+    if (to !== '') tx.to = web3.utils.toChecksumAddress(to)
+    if (value !== '') tx.value = web3.utils.numberToHex(web3.utils.toWei(value, 'ether'))
+
+    tx.data = encodeFunctionCall(func, data)
+    console.log('tx', tx)
+
+    if (type === 'send') {
+      try { tx.gas = await eth_estimateGas(tx) }
+      catch (e) { throw e.message }
+      // console.log('gas', tx.gas)
+      if (gasPrice !== '') tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei')) // XXX: NOTE needs to be set for expert mode
+    }
+
+    return tx
+  }
+
+  async function sendTransaction(tx, type = 'send') {
+    if (type == 'send') method = 'eth_sendTransaction'
+    if (type == 'call') method = 'eth_call'
+    return await ethereum.request({ method: method, params: [tx] })
+  }
+
+
+  async function eth_estimateGas(tx, buffer = 1.2) {
+    let gasLimit = await ethereum.request({ method: 'eth_estimateGas', params: [tx] })
+    return web3.utils.toHex(parseInt(buffer * gasLimit))
+  }
+
+  function isValidAddress(address) {
+    try { web3.utils.toChecksumAddress(address) }
+    catch { return false }
+    return true
+  }
+
+
+
+  _global_elements = []
+
+  class Element {
+    constructor(data, parent = undefined) {
+      this._data = data
+      this._id = _global_elements.length
+      _global_elements.push(this)
+      // console.log('constructor call', data, this._id)
+
+      this.parent = parent
+      this.children = []
+      this._listener = undefined
+    }
+
+    appendChild(child) {
+      child.parent = this
+      this.children.push(child)
+      return child
+    }
+
+    renderChildren() {
+      let html = ''
+      for (let child of this.children)
+        html += child._render()
+      return html
+    }
+
+    _render() {
+      return this.render(this._id, this._data)
+    }
+    render(id, data) { }
+
+    _init() {
+      // console.log(this, '_init', this._id)
+      this.selector = document.querySelector(`#id${this._id}`)
+      this.selector.addEventListener('click', this._onclick.bind(this))
+      this.selector.addEventListener('change', this._onchange.bind(this))
+      this.selector.addEventListener('keyup', e => { if (e.key === 'Enter') this._onchange.bind(this) })
+
+      this.info = this.selector
+
+      this.init(this._id, this._data)
+      this.children.forEach(e => e._init())
+    }
+    init(id, data) { }
+
+    oninput() { }
+    onclick() { }
+    onchange() { }
+
+    _onclick() {
+      // console.log('_click', this._id)
+      this.onclick(this._id, this._data)
+      if (this.parent != undefined) this.parent._onclick()
+    }
+
+    _onchange() {
+      // console.log('_change', this._id)
+      this.onchange(this._id, this._data)
+      if (this.parent != undefined) this.parent._onchange()
+    }
+
+    setListener(listener) {
+      this._listener = listener
+    }
+
+    setInfo(text) {
+      this.info.innerText = text
+    }
+  }
+
+  class Banner extends Element {
+    render(id) { return `<div class="banner"><p id="id${id}"></p></div>` }
+  }
+
+  class Label extends Element {
+    render(id, data) {
+      let infoHtml = `<div><span id="id${id}"><span></div>`
+      let labelHtml = `<div><span class="label">${data}</span></div>`
+      let html = '<div class="labelGroup">' + labelHtml + infoHtml + '</div>'
+      return '<div class="group">' + html + '</div>'
+    }
+  }
+
+  class Panel extends Element {
+    constructor(elements, name = '', topLevel = false) {
+      super()
+      elements.forEach(e => this.appendChild(e))
+      this.name = name
+      this.topLevel = topLevel
+    }
+
+    render(id) {
+      let panelHeader = `<div class="panelHeader">${this.name}</div>`
+      let panel = panelHeader + '<div class="panelBody">' + this.renderChildren() + '</div>'
+      return `<div class="${this.topLevel ? 'topLevel' : 'panel'}" id="id${id}">` + panel + '</div>'
+    }
+  }
+
+  class ArgButton extends Element {
+
+    render(id, data) {
+      let html = `<button class="functionButton btn" id="id${id}" ${data.enabled ? '' : 'disabled="true"'}>${data.name}</button>`
+      html = '<div class="functionButtonDiv">' + html + '</div>'
+      return html
+    }
+
+  }
+
+  class TransactionElement extends Element {
+    async onchange(id) {
+      try { await this.buildTransactionWrapper() }
+      catch { }
+    }
+
+
+    async onclick(id, data) {
+      this.sendTransactionWrapper()
+    }
+
+    async buildTransactionWrapper() { // throws
+      let tx
+      let valid = true
+      let msg = ''
+
+      try { tx = await this.buildTransaction(this.getArgValues()) }
+      catch (e) { msg = e; valid = false; }
+
+      this.setInfo(msg)
+      if (valid) this.button.selector.disabled = false
+      else { this.button.selector.disabled = true; throw msg }
+
+      return tx
+    }
+
+    async sendTransaction() { // throws
+      let tx = await this.buildTransactionWrapper()
+      return await sendTransaction(tx, this._data.type)
+    }
+
+    async sendTransactionWrapper() {  // doesn't throw
+      let tx
+      let valid = true
+      let msg = ''
+
+      try { tx = await this.sendTransaction() }
+      catch (e) { msg = e.message; valid = false; }
+
+      // if (valid) this.button.selector.disabled = false
+      // else { this.setInfo(msg); this.button.selector.disabled = true }
+
+      this.setInfo(msg)
+      return msg
+    }
+
+  }
+
+  class ArgInputField extends Element {
+
+    render(id, data) {
+      let html = ''
+      html += `<input type="text" class="textInput" id="id${id}" placeholder="${data.placeholder}">`
+      html += `<div class="textInputInfo"><span id="infoId${id}" class="label"></span></div>`
+      if (data.standalone) html = `<div class="group"><span class="label">${data.label || ''}</span>` + html + '</div>'
+      else html = '<div>' + html + '</div>'
+      return html
+    }
+
+    async _onchange() {
+      let value = this.getValue()
+      let data = this._data
+      if (data.type === 'address') this.setInfo(await getAccountInfo(value))
+      if (data.type === 'addressfrom') this.setInfo(await getAccountInfo(value, 'person'))
+      if (data.type === 'contract') this.setInfo(await getAccountInfo(value, 'contract'))
+      if (data.type === 'erc721') this.setInfo(await getAccountInfo(value, 'erc721'))
+      if (data.type === 'ether') this.setInfo(validateCurrency(value, 'ether', true))
+      if (data.type === 'gwei') this.setInfo(validateCurrency(value, 'gwei', true))
+      if (data.type === 'function') this.setInfo(await parseFunction(value, data.allowNegate))
+
+      // console.log('_change', this._id)
+      this.onchange(this._id, this._data)
+      if (this.parent != undefined) this.parent._onchange()
+    }
+
+    init(id) {
+      this.info = document.querySelector(`#infoId${id}`)
+    }
+    _onclick() { }
+
+    getValue() {
+      let value = this.selector.value
+      if (this._data.type == 'addressfrom' && value === '') value = accounts[0]
+      return value
+    }
+
+    getArgValues() {
+      let arg = {}
+      arg[this._data.name] = this.getValue()
+      return arg
+    }
+  }
+
+
+  class Function extends TransactionElement {
+    render(id, data) {
+      this.button = this.appendChild(new ArgButton({ name: data.methodName, enabled: data.enabled }, this))
+      this.args = {}
+
+      let html = ''
+      for (let arg of data.args) {
+        // arg._standalone = false
+        this.args[arg.name] = this.appendChild(new ArgInputField(arg, this))
+        html += this.args[arg.name]._render()
+      }
+
+      let headerHtml = `<div class="functionHeader">${data.methodName}</div>`
+
+      html = `<div class="functionArgGroup">` + html + '</div>'
+      html = this.button._render() + html
+      html = '<div class="functionInputDiv">' + html + '</div>'
+      html = html + `<div class="functionInfoDiv"><span class="functionInfo" id="id${id}"></span></div>`
+      html = `<div class="functionGroup" id="functionGroup${id}">` + html + '</div>'
+      html = '<div class="group">' + headerHtml + html + '</div>'
+      return html
+    }
+
+    getArgValues() {
+      return objectMap(this.args, e => e.getValue())
+    }
+
+  }
+
+  class CheckBox extends Element {
+    render(id, data) {
+      return `<div class="group"><span class="label">${data.label}</span><input type="checkbox" id="id${id}"><span id="infoId${id}" class="label"></span></div>`
+    }
+    init(id) {
+      this.info = document.querySelector(`#infoId${id}`)
+    }
+
+  }
+
+
+
+  $ = document.querySelector.bind(document)
+
+
+
+
+  let accounts = []
+
+
+
+
+
+
+
+
+  // CALL
+
+  callTx = new Function({
+    methodName: 'Call',
+    type: 'call',
+    args: [
+      { name: 'to', placeholder: 'to', type: 'address' },
+      { name: 'function', placeholder: 'function / hash', type: 'function' },
+      { name: 'data', placeholder: 'data', type: 'string' },
+    ]
+  })
+
+  callTx.buildTransaction = async (args) => {
+    console.log('callTx build', args)
+    return await buildTransaction(
+      '',
+      args.to,
+      '',
+      '',
+      args.function,
+      args.data,
+    )
+  }
+
+
+
+  // SEND TRANSACTION
+
+  sendTx = new Function({
+    methodName: 'Send Transaction',
+    type: 'send',
+    args: [
+      { name: 'from', placeholder: 'from', type: 'addressfrom' },
+      { name: 'to', placeholder: 'to', type: 'address' },
+      { name: 'value', placeholder: 'value (eth)', type: 'ether' },
+      { name: 'gasPrice', placeholder: 'gas (gwei)', type: 'gwei' },
+      { name: 'function', placeholder: 'function / hash', type: 'function' },
+      { name: 'data', placeholder: 'data', type: 'string' },
+    ]
+  })
+
+
+  sendTx.buildTransaction = async (args) => {
+    return await buildTransaction(
+      args.from,
+      args.to,
+      args.value,
+      args.gasPrice,
+      args.function,
+      args.data,
+    )
+  }
+
+  // SEND CONDITION
+
+  var checkInterval = 5000
+  sendTxCondBox = new CheckBox({ label: 'when possible' })
+  sendTxCondBox.dots = 1
+  sendTxCondBox.onchange = function () {
+    let watching = this.selector.checked
+    this.setInfo(watching ? 'watching' + '.'.repeat(this.dots++ % (1000 / checkInterval)) : '')
+    if (watching) {
+      this.sendLock = false
+      let interval = this.interval = setInterval(async () => {
+        if (this.sendLock) return
+        let valid = true
+        console.log('check')
+        try { beep(); await sendTx.buildTransactionWrapper() }
+        catch { valid = false }
+        if (valid) {
+          try { this.sendLock = true; await sendTx.sendTransactionWrapper() } // can still be low level invalid
+          catch { valid = false }
+          this.sendLock = false
+        }
+
+        if (valid) {
+          this.selector.checked = false
+          this.setInfo('Transaction sent!')
+          clearInterval(interval)
+        }
+
+      }, checkInterval);
+    } else clearInterval(this.interval)
+  }.bind(sendTxCondBox)
+
+
+
+  // MULTICALL
+
+
+  deployMultTx = new Function({
+    methodName: 'deploy',
+    type: 'send',
+    enabled: true,
+    args: [{ name: 'from', placeholder: 'from', type: 'addressfrom' }]
+  })
+  deployMultTx.buildTransaction = async (args) => {
+
+    let key = web3.utils.soliditySha3(args.from, 'hahahaha').slice(2)
+    let data = multicallDeployData + key
+
+    return buildTransaction('', '', '', '', '', data)
+  }
+
+  let deployedToField = new ArgInputField({ name: 'to', placeholder: 'multicall deployed address', type: 'contract' })
+
+  withdrawTokenTx = new Function({
+    methodName: 'Withdraw Token',
+    type: 'send',
+    args: [
+      { name: 'from', placeholder: 'from', type: 'addressfrom' },
+      { name: 'tokenAddr', placeholder: 'tokenAddr', type: 'erc721' },
+      { name: 'tokenIds', placeholder: 'token Ids' },
+    ]
+  })
+
+  withdrawTokenTx.buildTransaction = async (args) => {
+
+    let multicallAddress = deployedToField.getValue()
+    if (multicallAddress === '') throw 'Multicall not deployed.'
+
+    let tokenAddr = web3.utils.toChecksumAddress(args.tokenAddr)
+    let tokenIds = args.tokenIds.split(',')
+
+    let data = web3.eth.abi.encodeFunctionCall({
+      name: 'withdrawToken', type: 'function',
+      inputs: [{ type: 'address', name: 'addr', payable: true, },
+      { type: 'uint256[]', name: 'tokenIds' }]
+    }, [tokenAddr, tokenIds])
+
+    let tx = buildTransaction('', multicallAddress, '', '', '', data)
+
+    return tx
+  }
+
+
+  multTx = new Function({
+    methodName: 'BatchMint',
+    type: 'send',
+    args: [
+      { name: 'from', placeholder: 'from', type: 'addressfrom' },
+      { name: 'tokenAddr', placeholder: 'tokenAddr', type: 'erc721' },
+      { name: 'mintPrice', placeholder: 'mintPrice (eth)', type: 'ether' },
+      { name: 'gasPrice', placeholder: 'gas (gwei)', type: 'gwei' },
+      { name: 'function', placeholder: 'mint function / hash', type: 'function' },
+      { name: 'numCalls', placeholder: 'numCalls', type: 'string' },
+    ]
+  })
+
+  multTx.buildTransaction = async (args) => {
+    console.log('build', args)
+    let from = web3.utils.toChecksumAddress(args.from)
+
+    // console.log('1')
+
+    let to = deployedToField.getValue()
+    if (to === '') throw 'Multicall not deployed.'
+    to = web3.utils.toChecksumAddress(to)
+
+    let tokenAddr = web3.utils.toChecksumAddress(args.tokenAddr)
+    let mintFn = args.function
+    let mintFnCallData = web3.eth.abi.encodeFunctionCall({ name: mintFn, type: 'function', inputs: [{ type: 'uint256', name: '' }] }, ['1'])
+
+    let numCalls = args.numCalls
+    let mintPrice = web3.utils.toWei(args.mintPrice, 'ether')
+    let value = web3.utils.toHex(web3.utils.toBN(mintPrice).mul(web3.utils.toBN(numCalls)).toString())
+
+    let mintPriceHex = web3.utils.toHex(mintPrice)
+
+    let data = web3.eth.abi.encodeFunctionCall({
+      name: 'multicall',
+      type: 'function',
+      payable: true,
+      inputs: [
+        { type: 'address', name: 'addr', payable: true, },
+        { type: 'uint256', name: 'num' },
+        { type: 'uint256', name: 'value' },
+        { type: 'bytes', name: 'data' },
+      ]
+    }, [
+      tokenAddr,
+      numCalls,
+      mintPriceHex,
+      mintFnCallData,
+    ])
+
+    let gasPrice = args.gasPrice
+    if (gasPrice !== '') tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei'))
+
+    let tx = { from: from, to: to, value: value, data: data, gasPrice: gasPrice }
+    tx.gas = await eth_estimateGas(tx)
+
+    return tx
+  }
+
+
+  warningBanner = new Banner('warning')
+  warningBanner.onchange = async () => {
+    warningBanner.setInfo(ethereum.chainId == 1 ? 'WARNING: CURENTLY ON MAINNET' : '')
+    if (ethereum.chainId == 1)
+      warningBanner.selector.style.display = 'unset'
+    else
+      warningBanner.selector.style.display = 'none'
+  }
+  chainLabel = new Label('chainId')
+  chainLabel.onchange = async () => {
+    chainLabel.setInfo(ethereum.chainId.slice(2))
+  }
+  accountLabel = new Label('account')
+  accountLabel.onchange = async () => {
+    accountLabel.setInfo(accounts[0] + ' ' + await getAccountInfo(accounts[0]))
+  }
+
+  multiPanel = new Panel([
+    deployMultTx,
+    deployedToField,
+    withdrawTokenTx,
+    multTx,
+  ], "MultiCall")
+
+  // infoPanel = new Panel([
+  //   chainLabel,
+  //   accountLabel,
+  // ])
+
+  sendTxCondition = new Panel([
+    sendTxCondBox,
+    // sendTxCondCall,
+  ], "auto send under conditon")
+
+  txPanel = new Panel([
+    callTx,
+    sendTx,
+    sendTxCondition,
+  ])
+
+  mainPanel = new Panel([
+    // infoPanel,
+    chainLabel,
+    accountLabel,
+    txPanel,
+    multiPanel,
+  ])
+
+  container = new Panel([
+    warningBanner,
+    mainPanel,
+  ], '', true)
+
+  document.body.innerHTML = container._render()
+  container._init()
+
+  var web3 = new Web3(Web3.givenProvider)
+
+  async function reloadAccounts() {
+    accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    accountLabel.onchange()
+    warningBanner.onchange()
+    chainLabel.onchange()
+  }
+  ethereum.on('chainChanged', reloadAccounts)
+  ethereum.on('accountsChanged', reloadAccounts)
+  window.addEventListener('load', reloadAccounts)
+
+
+
+
+
+
+
+
+
+
+
+
+  // // const provider = new ethers.providers.Web3Provider(window.ethereum)
+
+  // // 0xe8a15fe5c4c12799776fb6f2b5b0b7205552cc7e // mystery man
+  console.log('Rinkeby multicall', "0x16a8F24AAFA68B0A610079786C78dd5D67fD4610")
+  console.log('Rinkeby On1', "0x3bf2922f4520a8BA0c2eFC3D2a1539678DaD5e9D")  // ON1 Main
+  console.log('Rinkeby Chip', "0x6302c083ce0f5d0142e2a2d743e78d936232db6c")  // Chipto Rinkeby
+  console.log('Rinkeby Dogu', "0xe689c7c5a5e6fa5d0f5d0c5be165bcb73c2d5d9c")     // DOGU Rinkeby
+  console.log('Main 0n1', "0x0692f6f933A3d050779472daE386b297269B4108")     // On1 Rinkeby
+  console.log('Main Chipto', "0xf3ae416615A4B7c0920CA32c2DfebF73d9D61514")  // Chipto
+  console.log('Main Dogu', "0x9c0ffc9088abeb2ea220d642218874639229fa7a")     // DOGU
+
+
+
+// expertMode = false
+// $('.expertMode').addEventListener('change', () => {
+//   snipeWatching = false
+//   clearInterval(interval);
+//   expertMode = $('.expertMode').checked
+//   if (expertMode) $('.snipeButton').innerText = 'Snipe (privKey), Dangerous!!'
+//   else $('.snipeButton').innerText = 'Snipe (MetaMask)!'
+//   updateTxStatus()
+// })
+
+// function sendTransactionPrivKey() {
+//   tx = getTransaction(testAccount.address)
+//   signedTx = web3.eth.accounts.signTransaction(tx, testAccount.privateKey)
+//   // console.log(signedTx)
+//   sentTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+//   // console.log(sentTx)
+//   // getTransaction(testAccount.address)
+//   //   .then(tx => {
+//   //     console.log(tx)
+//   //     web3.eth.accounts.signTransaction(tx, testAccount.privateKey)
+//   //       .then(signedTx => {
+//   //         console.log(signedTx)
+//   //         web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+//   //           .then(console.log)
+//   //       })
+
+//   //   })
+// }
+
+// async function validMintCondition() {
+//   valid = false
+//   fn = $('.mintStatusFn').value
+//   if (fn !== '') {
+//     valid = true
+//     if (fn[0] === '!') fn = fn.slice(1,)
+//     try {
+//       await ethereum.request({ method: 'eth_call', params: [{ to: web3.utils.toChecksumAddress($('.sendTo').value), data: getFnHash(fn) }] })
+//     } catch { valid = false }
+//   }
+
+//   time = $('.mintblockTime').value
+//   if (time !== '') {
+//     timeLeft = new Date(new Date(time * 1000) - new Date())
+//     if (timeLeft.toString() !== 'Invalid Date') valid = true
+//   }
+//   return valid
+// }
+
+// async function mintCondition() {
+//   fn = $('.mintStatusFn').value
+//   if (fn !== '') {
+//     negate = false
+//     if (fn[0] === '!') {
+//       fn = fn.slice(1,)
+//       negate = true
+//     }
+//     await ethereum.request({ method: 'eth_call', params: [{ to: $('.sendTo').value, data: getFnHash(fn) }] })
+//       .then((status) => {
+//         status = Boolean(parseInt(status))
+//         if (negate) status = !status
+//         $('.mintInfo').innerText = 'Live: ' + String(status)
+//         $('.mintInfo').style.backgroundColor = status ? 'lightgreen' : 'orange'
+//         if (status && snipeWatching) mintConditionReached()
+//       })
+//   }
+
+//   time = $('.mintblockTime').value
+//   if (time !== '') {
+//     timeLeft = new Date(new Date(time * 1000) - new Date())
+//     if (timeLeft.toString() === 'Invalid Date') throw 'Invalid Date'
+//     $('.mintInfo').innerText = `Time left: ${timeLeft < 0 ? '-' : ''}${timeLeft.getHours()}h ${timeLeft.getMinutes()}m ${timeLeft.getSeconds()}s`
+
+//     if (timeLeft < 0) {
+//       $('.mintInfo').style.backgroundColor = 'lightgreen'
+//       mintConditionReached()
+//     }
+//     else $('.mintInfo').style.backgroundColor = 'orange'
+//   }
+
+//   console.log('check')
+// }
+
+// sendTxCondCall = new ArgInputField({ name: 'function', placeholder: 'function / hash', type: 'function', standalone: true, label: 'is true', allowNegate: true }) //add standalone output
+// sendTxCondCall.buildTransaction = async (args) => {
+//   to = sendTx.args.to.getValue()
+//   if (to == '') throw '^Invalid Address'
+//   // if (args.function == '') throw 'Invalid Function'
+//   return await buildTransaction(
+//     '',
+//     to,
+//     '',
+//     '',
+//     args.function,
+//     '',
+//     'call',
+//   )
+// }
+// sendTxCondCall.onchange = async function () {
+//   // let txCondition = await sendTxCondCall.buildTransactionWrapper()
+//   let valid = true
+//   let msg = ''
+//   try {
+//     console.log('building')
+//     let tx = await this.buildTransaction({ function: this.getValue() })
+//     console.log('sending')
+//     let result = await sendTransaction(tx, 'call')
+//     console.log('sendTxCondCall result', result)
+//     valid = web3.eth.abi.decodeParameter('bool', result)
+//     console.log('valid', valid)
+//     this.setInfo(valid);
+//   }
+//   catch (e) { this.setInfo(e.message); valid = false; }
+
+//   if (!valid) return
+
+//   let tx;
+//   try {
+//     tx = sendTx.buildTransaction(sendTx.getArgValues())
+//   } catch (e) { this.setInfo('^Invalid Transaction'); valid = false; }
+
+//   console.log(tx)
+//   await sendTransaction(tx)
+// }.bind(sendTxCondCall)
+// privKey = web3.eth.accounts.create().privateKey
+// $('.testAccountPrivKey').innerText = 'Test account private key: ' + privKey
+// $('.privKey').addEventListener('change', async () => {
+//   $('.expertMode').style.display = 'unset'
+//   $('.expertModeInfo').style.display = 'unset'
+//   testAccount = web3.eth.accounts.privateKeyToAccount($('.privKey').value)
+// })
+
+// var ABI
+// var web3Contract
+
+// function updateABI() {
+//   abi = $('.abi').value
+//   if (abi !== '') ABI = JSON.parse(abi)
+//   web3Contract = new web3.eth.Contract(ABI)
+// }
+
+// $('.abi').addEventListener('change', updateABI)
+
+
+
+
+// SNIPE
+
+// var checkInterval = 200
+
+// snipeWatching = false
+// var interval = 0
+
+// $('.snipeButton').addEventListener('click', () => {
+//   if (snipeWatching) {
+//     clearInterval(interval);
+//     $('.mintInfo').innerText = 'Stopped'
+//     snipeWatching = false
+//     $('.mintInfo').style.backgroundColor = ''
+//   } else {
+//     $('.mintInfo').innerText = 'Checking..'
+//     interval = setInterval(mintCondition, checkInterval);
+//     snipeWatching = true
+//   }
+// });
+
+// expertMode = false
+// $('.expertMode').addEventListener('change', () => {
+//   snipeWatching = false
+//   clearInterval(interval);
+//   expertMode = $('.expertMode').checked
+//   if (expertMode) $('.snipeButton').innerText = 'Snipe (privKey), Dangerous!!'
+//   else $('.snipeButton').innerText = 'Snipe (MetaMask)!'
+//   updateTxStatus()
+// })
+
+// function mintConditionReached() {
+//   clearInterval(interval);
+//   snipeWatching = false
+//   beep()
+//   if (expertMode) sendTransactionPrivKey()
+//   else sendTransaction()
+// }
+
+// function sendTransactionPrivKey() {
+//   tx = getTransaction(testAccount.address)
+//   signedTx = web3.eth.accounts.signTransaction(tx, testAccount.privateKey)
+//   // console.log(signedTx)
+//   sentTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+//   // console.log(sentTx)
+//   // getTransaction(testAccount.address)
+//   //   .then(tx => {
+//   //     console.log(tx)
+//   //     web3.eth.accounts.signTransaction(tx, testAccount.privateKey)
+//   //       .then(signedTx => {
+//   //         console.log(signedTx)
+//   //         web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+//   //           .then(console.log)
+//   //       })
+
+//   //   })
+// }
+
+// async function validMintCondition() {
+//   valid = false
+//   fn = $('.mintStatusFn').value
+//   if (fn !== '') {
+//     valid = true
+//     if (fn[0] === '!') fn = fn.slice(1,)
+//     try {
+//       await ethereum.request({ method: 'eth_call', params: [{ to: web3.utils.toChecksumAddress($('.sendTo').value), data: getFnHash(fn) }] })
+//     } catch { valid = false }
+//   }
+
+//   time = $('.mintblockTime').value
+//   if (time !== '') {
+//     timeLeft = new Date(new Date(time * 1000) - new Date())
+//     if (timeLeft.toString() !== 'Invalid Date') valid = true
+//   }
+//   return valid
+// }
+
+// async function mintCondition() {
+//   fn = $('.mintStatusFn').value
+//   if (fn !== '') {
+//     negate = false
+//     if (fn[0] === '!') {
+//       fn = fn.slice(1,)
+//       negate = true
+//     }
+//     await ethereum.request({ method: 'eth_call', params: [{ to: $('.sendTo').value, data: getFnHash(fn) }] })
+//       .then((status) => {
+//         status = Boolean(parseInt(status))
+//         if (negate) status = !status
+//         $('.mintInfo').innerText = 'Live: ' + String(status)
+//         $('.mintInfo').style.backgroundColor = status ? 'lightgreen' : 'orange'
+//         if (status && snipeWatching) mintConditionReached()
+//       })
+//   }
+
+//   time = $('.mintblockTime').value
+//   if (time !== '') {
+//     timeLeft = new Date(new Date(time * 1000) - new Date())
+//     if (timeLeft.toString() === 'Invalid Date') throw 'Invalid Date'
+//     $('.mintInfo').innerText = `Time left: ${timeLeft < 0 ? '-' : ''}${timeLeft.getHours()}h ${timeLeft.getMinutes()}m ${timeLeft.getSeconds()}s`
+
+//     if (timeLeft < 0) {
+//       $('.mintInfo').style.backgroundColor = 'lightgreen'
+//       mintConditionReached()
+//     }
+//     else $('.mintInfo').style.backgroundColor = 'orange'
+//   }
+
+//   console.log('check')
+// }
+
+</script>
+
+</html>
