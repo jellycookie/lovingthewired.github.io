@@ -200,11 +200,13 @@ multTx.buildTransaction = async (args) => {
     mintFnCallData,
   ])
 
+  let tx = { from: from, to: to, value: value, data: data }
+
   let gasPrice = args.gasPrice
   if (gasPrice !== '') tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei'))
 
-  let tx = { from: from, to: to, value: value, data: data, gasPrice: gasPrice }
-  tx.gas = await eth_estimateGas(tx)
+  try { tx.gas = await eth_estimateGas(tx) }
+  catch (e) { throw e.message }
 
   return tx
 }
