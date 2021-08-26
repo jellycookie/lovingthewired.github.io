@@ -23,7 +23,7 @@
   }
 
   .label {
-    margin: 0 1em;
+    margin-right: 1em;
   }
 
   .labelGroup {
@@ -34,12 +34,12 @@
     margin: 0 1em;
   } */
 
-  /* .panelHeader {
-    margin
-  } */
+  .panelHeader {
+    margin-top: 1em;
+  }
 
   .panelBody {
-    margin: 1em 2em;
+    margin: 0em 2em 1em 2em;
   }
 
 
@@ -67,6 +67,7 @@
     display: inline-flex;
     overflow-x: scroll;
     max-width: 15em;
+    margin-left: 0.5em;
   }
 
   .textInputInfo::-webkit-scrollbar {
@@ -124,117 +125,6 @@
 </style>
 
 <body>
-  <!-- <h1>Create Contract</h1>
-  <input type="text" placeholder='data' class="deployData">
-  <br>
-  <button class="createButton btn">Create Contract</button>
-  <br><br> -->
-  <!-- 
-  <span class='chainId'></span>
-  <br>
-  <h1 class='warning' style='color:red; background-color: yellow'></h1>
-  <h3>Accounts</h3>
-  <span class="accountInfo"></span>
-  <br>
-  <br>
-  <span class="testAccountPrivKey"></span>
-  <br>
-  <input type="text" placeholder='enter private key' class="privKey">
-  <br>
-  <span class="testAccountInfo"></span>
-
-  <h1>Send Transaction</h1>
-  <input type="text" placeholder='to / contract' class="sendTo triggerUpdate">
-  <br>
-  <br>
-  <input type="text" placeholder='abi' class="abi triggerUpdate">
-  <br>
-  <br>
-  <input type="text" placeholder='value (eth)' class="sendValue triggerUpdate">
-  <br>
-  <input type="text" placeholder='gas (gwei)' class="sendGas triggerUpdate">
-  <br>
-  <input type="text" placeholder='function / function hash' class="sendFn fnField triggerUpdate">
-  <span class="sendFnInfo"></span>
-  <br>
-  <textarea placeholder='data' class="sendData triggerUpdate"
-    oninput='this.style.height = "";this.style.height = this.scrollHeight + 3 + "px"'
-    style="max-height:100px"></textarea>
-  <textarea readonly placeholder='payload (computed)' class="sendDataInfo"></textarea>
-  <br>
-  <button class="sendButton btn">Send Transaction</button>
-  <br>
-  <span class="sendTxInfo"></span>
-
-  <h3>Mint when sale goes live</h3>
-  <input type="text" placeholder='mintPrice (eth)' class="mintPrice">
-  <br>
-  <input type="text" placeholder='mintAmount' class="mintAmount">
-  <br>
-  <p>under condition</p>
-  <input type="text" placeholder='mintStatus function' class="mintStatusFn fnField fnAllowNegate triggerUpdate">
-  <span class="mintStatusFnInfo"></span>
-  <br>
-  <input type="text" placeholder='blockTime' class="mintBlockTime triggerUpdate">
-  <span class="mintBlockTimeInfo"></span>
-  <br>
-  <button class="snipeButton btn">Snipe (MetaMask)!</button>
-  <span class="mintInfo"></span>
-  <br>
-  <input type="checkbox" class="expertMode" style='display: none'><label class='expertModeInfo' style='display: none'>I
-    am an expert!</label>
-
-
-  <br>
-  <br>
-  <h3>Call</h3>
-  <input type="text" placeholder='function / function hash' class="callFn fnField triggerUpdate triggerCall">
-  <span class="callFnInfo"></span>
-  <br>
-  <textarea placeholder='data' class="callData triggerUpdate triggerCall"
-    oninput='this.style.height = "";this.style.height = this.scrollHeight + 3 + "px"'></textarea>
-  <textarea readonly placeholder='payload (computed)' class="callDataInfo"></textarea>
-  <br>
-
-  <span class="callInfo"></span>
-  <br>
-  <h1 class='warning' style='color:red; background-color: yellow'></h1>
-
-  <br>
-  <h3>Multicall</h3>
-
-  <button class="multDeployBtn" disabled='true'>deploy from</button>
-  <input type="text" placeholder='address' class='multDeployFrom'>
-  <span class='multDeployFromInfo'></span>
-  <br>
-  <br>
-  <input type="text" placeholder='multicall deployed contract' class='multAddress multTrigger'>
-  <span class="multAddressInfo"></span>
-  <br>
-  <br>
-  <input type="text" placeholder='token contract' class='multTokenAddress'>
-  <span class="multTokenAddressInfo"></span>
-  <br>
-  <br>
-  <button class="multBtn">batch mint</button>
-  <br>
-  <input type="text" placeholder='mint function' class='multMintFn multTrigger'>
-  <br>
-  <input type="text" placeholder='numCalls' class='multNumCalls multTrigger'>
-  <br>
-  <input type="text" placeholder='mintPrice (eth)' class='multMintPrice multTrigger'>
-  <br>
-  <span class="multInfo"></span>
-  <br>
-  <br>
-  <button class="multTransferTokenBtn" disabled='true'>transfer</button>
-  <input type="text" placeholder='transferToken (ids[])' class='multTransferTokenId'>
-  <span class="multTransferTokenInfo"></span>
-
-  <br>
-  <br>
-  <button class="multWithdrawBtn">withdraw eth</button> -->
-
 </body>
 <script src="./multContract.js"></script>
 <script src="./utils.js"></script>

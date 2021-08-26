@@ -2,10 +2,10 @@
 
 $ = document.querySelector.bind(document)
 
-
-
+var web3 = new Web3(Web3.givenProvider)
 
 let accounts = []
+let keyAccount
 
 
 
@@ -220,13 +220,28 @@ warningBanner.onchange = async () => {
   else
     warningBanner.selector.style.display = 'none'
 }
+
 chainLabel = new Label('chainId')
 chainLabel.onchange = async () => {
   chainLabel.setInfo(ethereum.chainId.slice(2))
 }
+
 accountLabel = new Label('account')
 accountLabel.onchange = async () => {
   accountLabel.setInfo(accounts[0] + ' ' + await getAccountInfo(accounts[0]))
+}
+
+keyLabel = new Label('generated private key')
+keyLabel.init = () => {
+  privKey = web3.eth.accounts.create().privateKey
+  keyLabel.setInfo(privKey)
+}
+
+keyField = new ArgInputField({ placeholder: 'private key account', type: 'key' })
+keyField.onchange = () => {
+  let key = keyField.getValue()
+  keyField.setInfo(key)
+  keyAccount = web3.eth.accounts.privateKeyToAccount(key) // in globals
 }
 
 multiPanel = new Panel([
@@ -256,6 +271,8 @@ mainPanel = new Panel([
   // infoPanel,
   chainLabel,
   accountLabel,
+  keyLabel,
+  keyField,
   txPanel,
   multiPanel,
 ])
@@ -268,7 +285,6 @@ container = new Panel([
 document.body.innerHTML = container._render()
 container._init()
 
-var web3 = new Web3(Web3.givenProvider)
 
 async function reloadAccounts() {
   accounts = await ethereum.request({ method: 'eth_requestAccounts' });

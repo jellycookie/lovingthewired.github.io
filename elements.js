@@ -76,8 +76,8 @@ class Banner extends Element {
 
 class Label extends Element {
   render(id, data) {
-    let infoHtml = `<div><span id="id${id}"><span></div>`
-    let labelHtml = `<div><span class="label">${data}</span></div>`
+    let infoHtml = `<div class="label"><span id="id${id}"><span></div>`
+    let labelHtml = `<div class="label"><span>${data}</span></div>`
     let html = '<div class="labelGroup">' + labelHtml + infoHtml + '</div>'
     return '<div class="group">' + html + '</div>'
   }
@@ -181,6 +181,16 @@ class ArgInputField extends Element {
     // console.log('_change', this._id)
     this.onchange(this._id, this._data)
     if (this.parent != undefined) this.parent._onchange()
+  }
+
+  parse() {
+    if (data.type === 'address') return await getAccountInfo(value)
+    if (data.type === 'addressfrom') return await getAccountInfo(value, 'person')
+    if (data.type === 'contract') return await getAccountInfo(value, 'contract')
+    if (data.type === 'erc721') return await getAccountInfo(value, 'erc721')
+    if (data.type === 'ether') return validateCurrency(value, 'ether', true)
+    if (data.type === 'gwei') return validateCurrency(value, 'gwei', true)
+    if (data.type === 'function') return await parseFunction(value, data.allowNegate)
   }
 
   init(id) {
