@@ -168,22 +168,20 @@ class ArgInputField extends Element {
   }
 
   async _onchange() {
-    let value = this.getValue()
-    let data = this._data
-    if (data.type === 'address') this.setInfo(await getAccountInfo(value))
-    if (data.type === 'addressfrom') this.setInfo(await getAccountInfo(value, 'person'))
-    if (data.type === 'contract') this.setInfo(await getAccountInfo(value, 'contract'))
-    if (data.type === 'erc721') this.setInfo(await getAccountInfo(value, 'erc721'))
-    if (data.type === 'ether') this.setInfo(validateCurrency(value, 'ether', true))
-    if (data.type === 'gwei') this.setInfo(validateCurrency(value, 'gwei', true))
-    if (data.type === 'function') this.setInfo(await parseFunction(value, data.allowNegate))
-
     // console.log('_change', this._id)
+
+    try { this.setInfo(await this.parse()) }
+    catch (e) { this.setInfo(e) }
+
     this.onchange(this._id, this._data)
     if (this.parent != undefined) this.parent._onchange()
   }
 
-  parse() {
+  async parse() {
+    let value = this.getValue()
+    let data = this._data
+    // console.log('parsing')
+    // console.log(data, value)
     if (data.type === 'address') return await getAccountInfo(value)
     if (data.type === 'addressfrom') return await getAccountInfo(value, 'person')
     if (data.type === 'contract') return await getAccountInfo(value, 'contract')
@@ -191,6 +189,11 @@ class ArgInputField extends Element {
     if (data.type === 'ether') return validateCurrency(value, 'ether', true)
     if (data.type === 'gwei') return validateCurrency(value, 'gwei', true)
     if (data.type === 'function') return await parseFunction(value, data.allowNegate)
+    if (data.type === 'key') {
+      let key = web3.eth.accounts.privateKeyToAccount(value).address
+      return key + ' ' + await getAccountInfo(key, 'person')
+    }
+    return value
   }
 
   init(id) {
@@ -243,10 +246,11 @@ class Function extends TransactionElement {
 
 class CheckBox extends Element {
   render(id, data) {
-    return `<div class="group"><span class="label">${data.label}</span><input type="checkbox" id="id${id}"><span id="infoId${id}" class="label"></span></div>`
+    return `<div class="group" id="groupId${id}"><span class="label">${data.label}</span><input type="checkbox" id="id${id}"><span id="infoId${id}" class="label"></span></div>`
   }
   init(id) {
     this.info = document.querySelector(`#infoId${id}`)
+    this.group = document.querySelector(`#groupId${id}`)
   }
 
 }
