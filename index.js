@@ -22,7 +22,7 @@ callTx = new Function({
   args: [
     { name: 'to', placeholder: 'to', type: 'address' },
     { name: 'function', placeholder: 'function / hash', type: 'function' },
-    { name: 'data', placeholder: 'data', type: 'string' },
+    { name: 'data', placeholder: 'data', type: 'data' },
   ]
 })
 
@@ -35,6 +35,7 @@ callTx.buildTransaction = async (args) => {
     '',
     args.function,
     args.data,
+    '',
   )
 }
 
@@ -46,17 +47,19 @@ sendTx = new Function({
   methodName: 'Send Transaction',
   type: 'send',
   args: [
-    { name: 'from', placeholder: 'from', type: 'addressfrom' },
+    { name: 'from', placeholder: 'from', type: 'person' },
     { name: 'to', placeholder: 'to', type: 'address' },
     { name: 'value', placeholder: 'value (eth)', type: 'ether' },
     { name: 'gasPrice', placeholder: 'gas (gwei)', type: 'gwei' },
     { name: 'function', placeholder: 'function / hash', type: 'function' },
-    { name: 'data', placeholder: 'data', type: 'string' },
+    { name: 'data', placeholder: 'data', type: 'data' },
+    { name: 'nonce', placeholder: 'nonce', type: 'int' },
   ]
 })
 
 
 sendTx.buildTransaction = async (args) => {
+  console.log('args', args)
   return await buildTransaction(
     args.from,
     args.to,
@@ -64,12 +67,13 @@ sendTx.buildTransaction = async (args) => {
     args.gasPrice,
     args.function,
     args.data,
+    args.nonce,
   )
 }
 sendTx.onchange = async () => {
+  sendTxCondBox.disable()
   try { await sendTx.buildTransactionWrapper() }
   catch { }
-  sendTxCondBox.disable()
 }
 
 // SEND CONDITION
@@ -85,16 +89,19 @@ sendTxCondBox.disable = function () {
 
 sendTxIfPossible = function () {
   let watching = this.selector.checked
-  this.setInfo(watching ? 'watching' + '.'.repeat(this.dots++ % (1000 / checkInterval)) : '')
   if (watching) {
     this.sendLock = false
     this.interval = setInterval(async () => {
       let valid = true
+
+      if (this.sendLock) return
+
+      this.setInfo(watching ? 'watching' + '.'.repeat(this.dots++ % 3) : '')
       console.log('check')
+
       try { await sendTx.buildTransactionWrapper() }
       catch { valid = false }
 
-      if (this.sendLock) return
       this.sendLock = true;
 
       if (valid) {
@@ -124,14 +131,14 @@ deployMultTx = new Function({
   methodName: 'deploy',
   type: 'send',
   enabled: true,
-  args: [{ name: 'from', placeholder: 'from', type: 'addressfrom' }]
+  args: [{ name: 'from', placeholder: 'from', type: 'person' }]
 })
 deployMultTx.buildTransaction = async (args) => {
 
   let key = web3.utils.soliditySha3(args.from, 'hahahaha').slice(2)
   let data = multicallDeployData + key
 
-  return buildTransaction('', '', '', '', '', data)
+  return buildTransaction('', '', '', '', '', data, '')
 }
 
 let deployedToField = new ArgInputField({ name: 'to', placeholder: 'multicall deployed address', type: 'contract' })
@@ -140,7 +147,7 @@ withdrawTokenTx = new Function({
   methodName: 'Withdraw Token',
   type: 'send',
   args: [
-    { name: 'from', placeholder: 'from', type: 'addressfrom' },
+    { name: 'from', placeholder: 'from', type: 'person' },
     { name: 'tokenAddr', placeholder: 'tokenAddr', type: 'erc721' },
     { name: 'tokenIds', placeholder: 'token Ids' },
   ]
@@ -160,7 +167,7 @@ withdrawTokenTx.buildTransaction = async (args) => {
     { type: 'uint256[]', name: 'tokenIds' }]
   }, [tokenAddr, tokenIds])
 
-  let tx = buildTransaction('', multicallAddress, '', '', '', data)
+  let tx = buildTransaction('', multicallAddress, '', '', '', data, '')
 
   return tx
 }
@@ -170,7 +177,7 @@ multTx = new Function({
   methodName: 'BatchMint',
   type: 'send',
   args: [
-    { name: 'from', placeholder: 'from', type: 'addressfrom' },
+    { name: 'from', placeholder: 'from', type: 'person' },
     { name: 'tokenAddr', placeholder: 'tokenAddr', type: 'erc721' },
     { name: 'mintPrice', placeholder: 'mintPrice (eth)', type: 'ether' },
     { name: 'gasPrice', placeholder: 'gas (gwei)', type: 'gwei' },
@@ -179,7 +186,7 @@ multTx = new Function({
   ]
 })
 
-multTx.buildTransaction = async (args) => {
+multTx.buildTransaction = async (args) => { //XXX: not using nonce
   // console.log('build', args)
   let from = web3.utils.toChecksumAddress(args.from)
 
@@ -366,85 +373,11 @@ async function reloadAccounts() {
   accountLabel.onchange()
   warningBanner.onchange()
   chainLabel.onchange()
+  container._update()
 }
 ethereum.on('chainChanged', reloadAccounts)
 ethereum.on('accountsChanged', reloadAccounts)
 window.addEventListener('load', reloadAccounts)
 
+setInterval(container._update, 1000)
 
-
-
-
-
-
-
-
-
-
-
-// // const provider = new ethers.providers.Web3Provider(window.ethereum)
-
-// // 0xe8a15fe5c4c12799776fb6f2b5b0b7205552cc7e // mystery man
-console.log('Rinkeby multicall', "0x16a8F24AAFA68B0A610079786C78dd5D67fD4610")
-console.log('Rinkeby On1', "0x3bf2922f4520a8BA0c2eFC3D2a1539678DaD5e9D")  // ON1 Main
-console.log('Rinkeby Chip', "0x6302c083ce0f5d0142e2a2d743e78d936232db6c")  // Chipto Rinkeby
-console.log('Rinkeby Dogu', "0xe689c7c5a5e6fa5d0f5d0c5be165bcb73c2d5d9c")     // DOGU Rinkeby
-console.log('Main multicall', '0x9805C53f7C46ffa3A750aE5a98c5aB83E5290316')
-console.log('Main 0n1', "0x0692f6f933A3d050779472daE386b297269B4108")     // On1 Rinkeby
-console.log('Main Chipto', "0xf3ae416615A4B7c0920CA32c2DfebF73d9D61514")  // Chipto
-console.log('Main Dogu', "0x9c0ffc9088abeb2ea220d642218874639229fa7a")     // DOGU
-
-
-
-// async function validMintCondition() {
-//   valid = false
-//   fn = $('.mintStatusFn').value
-//   if (fn !== '') {
-//     valid = true
-//     if (fn[0] === '!') fn = fn.slice(1,)
-//     try {
-//       await ethereum.request({ method: 'eth_call', params: [{ to: web3.utils.toChecksumAddress($('.sendTo').value), data: getFnHash(fn) }] })
-//     } catch { valid = false }
-//   }
-
-//   time = $('.mintblockTime').value
-//   if (time !== '') {
-//     timeLeft = new Date(new Date(time * 1000) - new Date())
-//     if (timeLeft.toString() !== 'Invalid Date') valid = true
-//   }
-//   return valid
-// }
-
-// async function mintCondition() {
-//   fn = $('.mintStatusFn').value
-//   if (fn !== '') {
-//     negate = false
-//     if (fn[0] === '!') {
-//       fn = fn.slice(1,)
-//       negate = true
-//     }
-//     await ethereum.request({ method: 'eth_call', params: [{ to: $('.sendTo').value, data: getFnHash(fn) }] })
-//       .then((status) => {
-//         status = Boolean(parseInt(status))
-//         if (negate) status = !status
-//         $('.mintInfo').innerText = 'Live: ' + String(status)
-//         $('.mintInfo').style.backgroundColor = status ? 'lightgreen' : 'orange'
-//         if (status && snipeWatching) mintConditionReached()
-//       })
-//   }
-
-//   time = $('.mintblockTime').value
-//   if (time !== '') {
-//     timeLeft = new Date(new Date(time * 1000) - new Date())
-//     if (timeLeft.toString() === 'Invalid Date') throw 'Invalid Date'
-//     $('.mintInfo').innerText = `Time left: ${timeLeft < 0 ? '-' : ''}${timeLeft.getHours()}h ${timeLeft.getMinutes()}m ${timeLeft.getSeconds()}s`
-
-//     if (timeLeft < 0) {
-//       $('.mintInfo').style.backgroundColor = 'lightgreen'
-//       mintConditionReached()
-//     }
-//     else $('.mintInfo').style.backgroundColor = 'orange'
-//   }
-
-//   console.log('check')
-// }

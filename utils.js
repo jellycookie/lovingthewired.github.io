@@ -7,11 +7,23 @@ async function beep() {
 
 async function parseFunction(func, allowNegate = false) {
   // console.log('allowNeg', allowNegate)
+  if (func === '') return ''
   if (allowNegate && func[0] === '!') func = func.slice(1)
   // console.log(func)
   if (func.slice(0, 2) == '0x' && func.length == 10) return func
   if (!func.match(/^[\d\w_-]+\(([\d\w]+)*(,[\d\w]+)*\)$/)) return 'Invalid Function'
   return await web3.eth.abi.encodeFunctionSignature(func)
+}
+
+function parseData(data) {
+  let rows = [data.slice(0, 10)]  // 0x + 8hex chars = 4*8 bits = 4 bytes
+  data = data.slice(10)
+
+  for (let rest = data; rest.length > 0; rest = rest.slice(64))
+    rows[rows.length] = rest.slice(0, 64)
+
+  return rows.join('\n')
+
 }
 
 function validateCurrency(amount, type = 'ether', allowEmpty = false) {
@@ -85,41 +97,72 @@ async function getAccountInfo(address, type = 'any') {
 
 
 function encodeFunctionCall(func, data) {
-  if (func === '') return data
-  if (func.slice(0, 2) === '0x') return func + data
-  if (data == '') return web3.eth.abi.encodeFunctionSignature(func)
+  let funcIsHex = func.slice(0, 2) === '0x'
+  let dataIsHex = data.slice(0, 2) === '0x'
+  if (func === '' && data === '') return ''
+  if (func === '') {
+    if (!dataIsHex) throw "Data missing Hex Identifier."
+    return data
+  }
+  if (dataIsHex) data = data.slice(2)
+  if (dataIsHex && data.length % 64 != 0) throw "Data not in multiples of 32 bytes."
 
-  let input_types = func.match(/\((.*)\)/g)[0].slice(1, -1).split(',')
-  let inputs = input_types.map(e => { return { type: e, name: '' } })
-  // console.log(func, inputs, data.split(','))
+  if (funcIsHex) return func + data
+  if (data === '') return web3.eth.abi.encodeFunctionSignature(func)
+  if (dataIsHex) return web3.eth.abi.encodeFunctionSignature(func) + data
+
+  let inputTypes = func.match(/\((.*)\)/g)[0].slice(1, -1).split(',')
+  let dataInputs = data.split(',')
+  for (let inptype of inputTypes) if (inptype === '') throw "Invalid function input / type."
+  // console.log(func, inputTypes, dataInputs)
+
+  let inputs = inputTypes.map(e => { return { type: e, name: '' } })
 
   return web3.eth.abi.encodeFunctionCall({
     name: func,
     type: 'function',
     inputs: inputs
-  }, data.split(','))
+  }, dataInputs)
 }
 
 
+function getDefaultAddress() {
+  if (expertMode.enabled) return privAccount.address
+  else return accounts[0]
+}
 
-async function buildTransaction(from, to, value, gasPrice, func, data, type = 'send') {
+async function buildTransaction(from, to, value, gasPrice, func, data, nonce, type = 'send') {
   let tx = {}
 
-  // console.log(from, to, value,)
+  // console.log(
+  //   '\nfrom',
+  //   from,
+  //   '\nto',
+  //   to,
+  //   '\nvalue',
+  //   value,
+  //   '\ngasPrice',
+  //   gasPrice,
+  //   '\nfunc',
+  //   func,
+  //   '\ndata',
+  //   data,
+  //   '\nnonce',
+  //   nonce,
+  //   '\ntype',
+  //   type,
+  // )
 
-  if (from === '') {
-    if (expertMode.enabled) from = privAccount.account
-    else from = accounts[0]
-  }
+  if (from === '') from = getDefaultAddress()
 
   tx.from = web3.utils.toChecksumAddress(from)
 
+  if (to === '' && data === '') throw 'No recipient.'
 
   if (to !== '') tx.to = web3.utils.toChecksumAddress(to)
   if (value !== '') tx.value = web3.utils.numberToHex(web3.utils.toWei(value, 'ether'))
 
   tx.data = encodeFunctionCall(func, data)
-  console.log('tx', tx)
 
   if (type === 'send') {
     try { tx.gas = await eth_estimateGas(tx) }
@@ -127,6 +170,9 @@ async function buildTransaction(from, to, value, gasPrice, func, data, type = 's
     // console.log('gas', tx.gas)
     if (gasPrice !== '') tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei')) // XXX: NOTE needs to be set for expert mode
   }
+  tx.nonce = nonce
+
+  console.log('build tx', tx)
 
   return tx
 }

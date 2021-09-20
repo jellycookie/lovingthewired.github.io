@@ -34,7 +34,6 @@ class Element {
   _init() {
     // console.log(this, '_init', this._id)
     this.selector = document.querySelector(`#id${this._id}`)
-    this.selector.addEventListener('click', this._onclick.bind(this))
     this.selector.addEventListener('change', this._onchange.bind(this))
     this.selector.addEventListener('keyup', e => { if (e.key === 'Enter') this._onchange.bind(this) })
 
@@ -44,6 +43,12 @@ class Element {
     this.children.forEach(e => e._init())
   }
   init(id, data) { }
+
+  _update() {
+    this.update(this._id, this._data)
+    this.children.forEach(e => e._update())
+  }
+  update(id, data) { }
 
   oninput() { }
   onclick() { }
@@ -106,55 +111,12 @@ class ArgButton extends Element {
     return html
   }
 
-}
-
-class TransactionElement extends Element {
-  async onchange(id) {
-    try { await this.buildTransactionWrapper() }
-    catch { }
-  }
-
-
-  async onclick(id, data) {
-    this.sendTransactionWrapper()
-  }
-
-  async buildTransactionWrapper() { // throws
-    let tx
-    let valid = true
-    let msg = ''
-
-    try { tx = await this.buildTransaction(this.getArgValues()) }
-    catch (e) { msg = e; valid = false; }
-
-    this.setInfo(msg)
-    if (valid) this.button.selector.disabled = false
-    else { this.button.selector.disabled = true; throw msg }
-
-    return tx
-  }
-
-  async sendTransaction() { // throws
-    let tx = await this.buildTransactionWrapper()
-    return await sendTransaction(tx, this._data.type)
-  }
-
-  async sendTransactionWrapper() {  // doesn't throw
-    let tx
-    let valid = true
-    let msg = ''
-
-    try { tx = await this.sendTransaction() }
-    catch (e) { msg = e.message; valid = false; }
-
-    // if (valid) this.button.selector.disabled = false
-    // else { this.setInfo(msg); this.button.selector.disabled = true }
-
-    this.setInfo(msg)
-    return msg
+  init() {
+    this.selector.addEventListener('click', this._onclick.bind(this))
   }
 
 }
+
 
 class ArgInputField extends Element {
 
@@ -183,12 +145,14 @@ class ArgInputField extends Element {
     // console.log('parsing')
     // console.log(data, value)
     if (data.type === 'address') return await getAccountInfo(value)
-    if (data.type === 'addressfrom') return await getAccountInfo(value, 'person')
+    // if (data.type === 'addressfrom') return await getAccountInfo(value, 'person')
+    if (data.type === 'person') return await getAccountInfo(value, 'person')
     if (data.type === 'contract') return await getAccountInfo(value, 'contract')
     if (data.type === 'erc721') return await getAccountInfo(value, 'erc721')
     if (data.type === 'ether') return validateCurrency(value, 'ether', true)
     if (data.type === 'gwei') return validateCurrency(value, 'gwei', true)
     if (data.type === 'function') return await parseFunction(value, data.allowNegate)
+    if (data.type === 'data') return ''
     if (data.type === 'key') {
       let key = web3.eth.accounts.privateKeyToAccount(value).address
       return key + ' ' + await getAccountInfo(key, 'person')
@@ -196,14 +160,25 @@ class ArgInputField extends Element {
     return value
   }
 
+  async update(id, data) {
+    if (data.name === 'from') {
+      let address = this.getValue() || getDefaultAddress()
+      this.selector.placeholder = `${data.placeholder} [${address}]`
+    }
+    if (data.name === 'nonce') {
+      let address = this.parent.args.from.getValue() || getDefaultAddress()
+      let nonce = await web3.eth.getTransactionCount(address)
+      this.selector.placeholder = `${data.placeholder} [${nonce}]`
+    }
+  }
+
   init(id) {
     this.info = document.querySelector(`#infoId${id}`)
   }
-  _onclick() { }
 
   getValue() {
     let value = this.selector.value
-    if (this._data.type == 'addressfrom' && value === '') value = accounts[0]
+    // if (this._data.type == 'addressfrom' && value === '') value = accounts[0]
     return value
   }
 
@@ -215,22 +190,24 @@ class ArgInputField extends Element {
 }
 
 
-class Function extends TransactionElement {
+class Function extends Element {
   render(id, data) {
     this.button = this.appendChild(new ArgButton({ name: data.methodName, enabled: data.enabled }, this))
     this.args = {}
 
-    let html = ''
+    let htmlArgs = ''
     for (let arg of data.args) {
       // arg._standalone = false
       this.args[arg.name] = this.appendChild(new ArgInputField(arg, this))
-      html += this.args[arg.name]._render()
+      htmlArgs += this.args[arg.name]._render()
     }
+    htmlArgs = `<div class="functionArgGroup">` + htmlArgs + '</div>'
 
     let headerHtml = `<div class="functionHeader">${data.methodName}</div>`
+    let dataHtml = `<div><div class="functionDataInfoHeader"><span id="dataInfoHeaderId${id}"></span></div><div class="functionDataInfo"><span id="dataInfoId${id}"></span></div></div>`
 
-    html = `<div class="functionArgGroup">` + html + '</div>'
-    html = this.button._render() + html
+    let html = ''
+    html = this.button._render() + htmlArgs + dataHtml
     html = '<div class="functionInputDiv">' + html + '</div>'
     html = html + `<div class="functionInfoDiv"><span class="functionInfo" id="id${id}"></span></div>`
     html = `<div class="functionGroup" id="functionGroup${id}">` + html + '</div>'
@@ -242,13 +219,74 @@ class Function extends TransactionElement {
     return objectMap(this.args, e => e.getValue())
   }
 
+  init(id) {
+    this.dataInfo = document.querySelector(`#dataInfoId${id}`)
+    this.dataInfoHeader = document.querySelector(`#dataInfoHeaderId${id}`)
+    this.group = document.querySelector(`#groupId${id}`)
+  }
+
+  async onchange(id) {
+    this._update()
+    try { await this.buildTransactionWrapper() }
+    catch { }
+  }
+
+
+  async onclick(id, data) {
+    this.sendTransactionWrapper()
+  }
+
+  async buildTransactionWrapper() { // throws
+    let tx
+    let valid = true
+    let msg = ''
+
+    try { tx = await this.buildTransaction(this.getArgValues()) }
+    catch (e) { msg = e; valid = false; }
+
+    console.log('setting info', msg)
+    this.setInfo(msg)
+
+    let dataInfo = parseData(tx.data)
+    this.dataInfo.innerText = dataInfo
+    this.dataInfoHeader.innerText = (dataInfo === '') ? '' : 'Data'
+    // console.log(tx.data, parseData(tx.data))
+
+    if (valid) this.button.selector.disabled = false
+    else { this.button.selector.disabled = true; throw msg }
+
+    return tx
+  }
+
+  async sendTransaction() { // throws
+    let tx = await this.buildTransactionWrapper()
+    return await sendTransaction(tx, this._data.type)
+  }
+
+  async sendTransactionWrapper() {  // doesn't throw
+    let tx
+    let valid = true
+    let msg = ''
+
+    try { tx = await this.sendTransaction() }
+    catch (e) { msg = e.message; valid = false; }
+
+    // if (valid) this.button.selector.disabled = false
+    // else { this.setInfo(msg); this.button.selector.disabled = true }
+
+    this.setInfo(msg)
+    return msg
+  }
+
+
 }
 
-class CheckBox extends Element {
+class CheckBox extends ArgButton {
   render(id, data) {
     return `<div class="group" id="groupId${id}"><span class="label">${data.label}</span><input type="checkbox" id="id${id}"><span id="infoId${id}" class="label"></span></div>`
   }
   init(id) {
+    this.selector.addEventListener('click', this._onclick.bind(this))
     this.info = document.querySelector(`#infoId${id}`)
     this.group = document.querySelector(`#groupId${id}`)
   }
