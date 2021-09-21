@@ -11,7 +11,7 @@ contract Multicall is Ownable, ERC721Holder {
     constructor(bytes32 _key) {
         require(
             keccak256(abi.encodePacked(msg.sender, "hahahaha")) == _key,
-            "noobz"
+            ""
         );
     }
 
