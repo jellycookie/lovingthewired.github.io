@@ -45,6 +45,7 @@ class Element {
   init(id, data) { }
 
   _update() {
+    // console.log('calling update', this._id, this._data)
     this.update(this._id, this._data)
     this.children.forEach(e => e._update())
   }
@@ -160,15 +161,16 @@ class ArgInputField extends Element {
     return value
   }
 
-  async update(id, data) {
+  update(id, data) {
     if (data.name === 'from') {
       let address = this.getValue() || getDefaultAddress()
       this.selector.placeholder = `${data.placeholder} [${address}]`
     }
     if (data.name === 'nonce') {
       let address = this.parent.args.from.getValue() || getDefaultAddress()
-      let nonce = await web3.eth.getTransactionCount(address)
-      this.selector.placeholder = `${data.placeholder} [${nonce}]`
+      let selector = this.selector
+      web3.eth.getTransactionCount(address)
+        .then(nonce => selector.placeholder = `${data.placeholder} [${nonce}]`)
     }
   }
 
@@ -244,7 +246,7 @@ class Function extends Element {
     try { tx = await this.buildTransaction(this.getArgValues()) }
     catch (e) { msg = e; valid = false; }
 
-    console.log('setting info', msg)
+    // console.log('setting info', msg)
     this.setInfo(msg)
 
     let dataInfo = parseData(tx.data)

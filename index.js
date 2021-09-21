@@ -379,5 +379,5 @@ ethereum.on('chainChanged', reloadAccounts)
 ethereum.on('accountsChanged', reloadAccounts)
 window.addEventListener('load', reloadAccounts)
 
-setInterval(container._update, 1000)
+setInterval(() => container._update(), 1000)
 
