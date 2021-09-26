@@ -227,9 +227,17 @@ class Function extends Element {
     this.group = document.querySelector(`#groupId${id}`)
   }
 
-  async onchange(id) {
+  _onchange() {
+    this.onchange(this._id, this._data)
+    if (this.parent != undefined) this.parent._onchange()
     this._update()
-    try { await this.buildTransactionWrapper() }
+  }
+
+  async onchange(id) {
+    try {
+      if (this._data.type === 'call') await this.sendTransactionWrapper()
+      else await this.buildTransactionWrapper()
+    }
     catch { }
   }
 
@@ -246,7 +254,6 @@ class Function extends Element {
     try { tx = await this.buildTransaction(this.getArgValues()) }
     catch (e) { msg = e; valid = false; }
 
-    // console.log('setting info', msg)
     this.setInfo(msg)
 
     let dataInfo = parseData(tx.data)
@@ -257,6 +264,8 @@ class Function extends Element {
     if (valid) this.button.selector.disabled = false
     else { this.button.selector.disabled = true; throw msg }
 
+    if ('gasLimit' in this.args) this.args.gasLimit.selector.placeholder = `gasLimit [${web3.utils.hexToNumberString(tx.gas)}]`
+
     return tx
   }
 
@@ -266,17 +275,17 @@ class Function extends Element {
   }
 
   async sendTransactionWrapper() {  // doesn't throw
-    let tx
+    let response
     let valid = true
     let msg = ''
 
-    try { tx = await this.sendTransaction() }
+    try { response = await this.sendTransaction() }
     catch (e) { msg = e.message; valid = false; }
 
     // if (valid) this.button.selector.disabled = false
     // else { this.setInfo(msg); this.button.selector.disabled = true }
 
-    this.setInfo(msg)
+    this.setInfo(valid ? response : msg)
     return msg
   }
 

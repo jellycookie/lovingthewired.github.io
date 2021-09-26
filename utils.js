@@ -47,6 +47,7 @@ async function isContract(address) {
 async function getAccountInfo(address, type = 'any') {
   let info = ''
   // console.log('query for ', address, type)
+  if (address === '') return
 
   let to = web3.utils.toChecksumAddress(address)
 
@@ -97,19 +98,24 @@ async function getAccountInfo(address, type = 'any') {
 
 
 function encodeFunctionCall(func, data) {
+  // console.log('encoding', func, data)
   let funcIsHex = func.slice(0, 2) === '0x'
-  let dataIsHex = data.slice(0, 2) === '0x'
-  if (func === '' && data === '') return ''
+  let dataIsHex = data.slice(0, 2) === '0x' && !data.includes(',')
   if (func === '') {
+    if (data === '') return ''
     if (!dataIsHex) throw "Data missing Hex Identifier."
     return data
   }
-  if (dataIsHex) data = data.slice(2)
-  if (dataIsHex && data.length % 64 != 0) throw "Data not in multiples of 32 bytes."
 
-  if (funcIsHex) return func + data
+
+  // if (dataIsHex && data.length % 64 != 0) throw "Data not in multiples of 32 bytes."
+
   if (data === '') return web3.eth.abi.encodeFunctionSignature(func)
-  if (dataIsHex) return web3.eth.abi.encodeFunctionSignature(func) + data
+
+  let dataIsEncoded = dataIsHex && (data.length - 2) % 64 == 0
+  if (dataIsEncoded) data = data.slice(2)
+
+  if (dataIsEncoded) return (funcIsHex ? func : web3.eth.abi.encodeFunctionSignature(func)) + data
 
   let inputTypes = func.match(/\((.*)\)/g)[0].slice(1, -1).split(',')
   let dataInputs = data.split(',')
@@ -131,7 +137,7 @@ function getDefaultAddress() {
   else return accounts[0]
 }
 
-async function buildTransaction(from, to, value, gasPrice, func, data, nonce, type = 'send') {
+async function buildTransaction(from, to, value, gasPrice, func, data, nonce, gasLimit, type = 'send') {
   let tx = {}
 
   // console.log(
@@ -155,22 +161,31 @@ async function buildTransaction(from, to, value, gasPrice, func, data, nonce, ty
 
   if (from === '') from = getDefaultAddress()
 
-  tx.from = web3.utils.toChecksumAddress(from)
+  from = web3.utils.toChecksumAddress(from)
+  tx.from = from
 
   if (to === '' && data === '') throw 'No recipient.'
 
-  if (to !== '') tx.to = web3.utils.toChecksumAddress(to)
+  if (to !== '') web3.utils.toChecksumAddress(to)
+  tx.to = to
+
   if (value !== '') tx.value = web3.utils.numberToHex(web3.utils.toWei(value, 'ether'))
 
   tx.data = encodeFunctionCall(func, data)
 
+  console.log('tx', tx)
+
   if (type === 'send') {
-    try { tx.gas = await eth_estimateGas(tx) }
-    catch (e) { throw e.message }
+    if (gasLimit) tx.gas = web3.utils.toHex(gasLimit)
+    // else {
+    //   try { tx.gas = await eth_estimateGas(tx) }
+    //   catch (e) { throw 'Gas estimation: ' + e.message }
+    // }
+
     // console.log('gas', tx.gas)
-    if (gasPrice !== '') tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei')) // XXX: NOTE needs to be set for expert mode
+    if (gasPrice) tx.gasPrice = web3.utils.numberToHex(web3.utils.toWei(gasPrice, 'gwei')) // XXX: NOTE needs to be set for expert mode
+    tx.nonce = nonce
   }
-  tx.nonce = nonce
 
   console.log('build tx', tx)
 

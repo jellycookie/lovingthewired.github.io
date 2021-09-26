@@ -4,6 +4,9 @@ $ = document.querySelector.bind(document)
 
 var web3 = new Web3(Web3.givenProvider)
 
+var abi = web3.eth.abi
+var BN = web3.utils.toBN
+
 let accounts = []
 let privAccount
 
@@ -36,8 +39,20 @@ callTx.buildTransaction = async (args) => {
     args.function,
     args.data,
     '',
+    '',
+    'call',
   )
 }
+// sendTx.sendTransaction() { // throws
+//   let tx = await this.buildTransactionWrapper()
+//   return await sendTransaction(tx, this._data.type)
+// }
+// console.log('args', args)
+// let msg
+// try { msg = await sendTransaction(tx, 'call') }
+// catch { }
+// console.log('response', msg)
+// // callTx.setInfo('response: ' + msg)
 
 
 
@@ -54,6 +69,7 @@ sendTx = new Function({
     { name: 'function', placeholder: 'function / hash', type: 'function' },
     { name: 'data', placeholder: 'data', type: 'data' },
     { name: 'nonce', placeholder: 'nonce', type: 'int' },
+    { name: 'gasLimit', placeholder: 'gasLimit', type: 'int' },
   ]
 })
 
@@ -68,6 +84,7 @@ sendTx.buildTransaction = async (args) => {
     args.function,
     args.data,
     args.nonce,
+    args.gasLimit,
   )
 }
 sendTx.onchange = async () => {
@@ -134,11 +151,12 @@ deployMultTx = new Function({
   args: [{ name: 'from', placeholder: 'from', type: 'person' }]
 })
 deployMultTx.buildTransaction = async (args) => {
-
-  let key = web3.utils.soliditySha3(args.from, 'hahahaha').slice(2)
+  let from = args.from || getDefaultAddress()
+  let key = web3.utils.soliditySha3(from, 'hahahaha').slice(2)
   let data = multicallDeployData + key
+  console.log('key', key)
 
-  return buildTransaction('', '', '', '', '', data, '')
+  return buildTransaction(from, '', '', '', '', data, '', '')
 }
 
 let deployedToField = new ArgInputField({ name: 'to', placeholder: 'multicall deployed address', type: 'contract' })
@@ -167,7 +185,7 @@ withdrawTokenTx.buildTransaction = async (args) => {
     { type: 'uint256[]', name: 'tokenIds' }]
   }, [tokenAddr, tokenIds])
 
-  let tx = buildTransaction('', multicallAddress, '', '', '', data, '')
+  let tx = buildTransaction('', multicallAddress, '', '', '', data, '', '')
 
   return tx
 }
